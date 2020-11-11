@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(MyAwesomeProject)
+project(Lichen)
 
 set(SOURCE_DIR src)
 set(TEST_DIR test)
@@ -17,11 +17,11 @@ if(SOUNDIO_FOUND)
     message(STATUS "SOUNDIO_FOUND=${SOUNDIO_FOUND}")
     include_directories(${SOUNDIO_INCLUDE_DIR})
     add_executable(
-        MyAwesomeProject
+        Lichen
         main.cpp
     )
-    target_link_libraries(MyAwesomeProject ${SOUNDIO_LIBRARY})
-    target_link_libraries(MyAwesomeProject LibDsp)
+    target_link_libraries(Lichen ${SOUNDIO_LIBRARY})
+    target_link_libraries(Lichen LibDsp)
 else()
     message("failed to find libraries!")
 endif()
