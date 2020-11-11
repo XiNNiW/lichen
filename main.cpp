@@ -50,7 +50,7 @@ static void write_sample_float64ne(char *ptr, double sample) {
 auto makeSignal(){
     signals::environment<double> e = signals::environment<double>(48000);
 
-    auto clock = e.constant(48000.0);//e.beats<double>(e.constant(120.0), e.constant(1.0));
+    auto clock = e.beats(e.constant(120.0), e.constant(1.0));
     auto env = e.adsr(
         e.div(clock,e.constant(4.0)),
         e.div(clock,e.constant(4.0)), 
@@ -60,7 +60,6 @@ auto makeSignal(){
     );
 
     auto pitch = e.mtof(
-        // e.constant(60)
         e.seq(clock, std::vector<int>({60,67,70,72}))
     );
 

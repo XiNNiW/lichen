@@ -15,13 +15,7 @@ struct compose{
 };
 namespace signals {
     namespace math {
-        // template<typename A>
-        // auto constant = [](const A & value){
-        //     A _value = value;
-        //     return [&](int t){
-        //         return _value;
-        //     };
-        // };
+
         template<typename A>
         struct constant {
             A _value;
@@ -40,14 +34,6 @@ namespace signals {
                 return signal_a(t)*signal_b(t);
             }
         };
-        // template<typename A, typename B>
-        // auto multiply = [](const auto & a, const auto & b){
-        //     auto _a = a;
-        //     auto _b = b;
-        //     return [&](const int & t){
-        //         return _a(t)*_b(t);
-        //     };
-        // };
 
         template<typename A, typename B>
         struct divide {
@@ -59,13 +45,6 @@ namespace signals {
                 return signal_a(t)/signal_b(t);
             }
         };
-        // auto divide = [](const auto & a, const auto & b){
-        //     auto _a = a;
-        //     auto _b = b;
-        //     return [=](const int& t){
-        //         return _a(t)/_b(t);
-        //     };
-        // };
 
         template<typename A, typename B>
         struct add {
@@ -77,13 +56,6 @@ namespace signals {
                 return signal_a(t)+signal_b(t);
             }
         };
-        // auto add = [](const auto & a, const auto & b){
-        //     auto _a = a;
-        //     auto _b = b;
-        //     return [=](const int & t){
-        //         return _a(t)+_b(t);
-        //     };
-        // };
 
         template<typename A, typename B>
         struct subtract {
@@ -95,13 +67,6 @@ namespace signals {
                 return signal_a(t)-signal_b(t);
             }
         };
-        // auto subtract = [](const auto & a, const auto & b){
-        //     auto _a = a;
-        //     auto _b = b;
-        //     return [=](const int & t){
-        //         return _a(t)-_b(t);
-        //     };
-        // };
 
         template<typename A>
         struct cosine {
@@ -112,12 +77,6 @@ namespace signals {
                 return cos(signal_a(t));
             }
         };
-        // auto cosine = [](const auto & a){
-        //     auto _a = a;
-        //     return [&](const int & t){
-        //         return cos(_a(t));
-        //     };
-        // };
 
         template<typename A>
         struct sine {
@@ -127,12 +86,6 @@ namespace signals {
                 return sin(signal_a(t));
             }
         };
-        // auto sine = [](const auto & a){
-        //     auto _a = a;
-        //     return [&](const int & t){
-        //         return cos(_a(t));
-        //     };
-        // };
 
         // auto sum = [](auto signals...){
         //     auto amount = constant(0);
@@ -151,42 +104,21 @@ namespace signals {
 
     } 
     namespace control{
-        // template<typename sample, typename BPM_sig, typename Num_sig>
-        // auto beats = [](const int & sr, const BPM_sig & bpm_s, const Num_sig & numBeats_s){
-        //     const sample SAMPLE_RATE = sr; 
-        //     const sample SECONDS_PER_MINUTE = 60.0;
-        //     BPM_sig _bpm_s = bpm_s;
-        //     Num_sig _numBeats_s = numBeats_s;
-        //     return [&](const int & t){
-        //         return (_numBeats_s(t)/_bpm_s(t))*SECONDS_PER_MINUTE*SAMPLE_RATE;
-        //     };
-        // };
+  
         template<typename sample, typename BPM_sig, typename Num_sig>
         struct beats { 
             const sample SAMPLE_RATE; 
             const sample SECONDS_PER_MINUTE = 60.0;
             BPM_sig _bpm_s;
             Num_sig _numBeats_s;
-            beats(const int & sr, const BPM_sig & bpm_s, const Num_sig & numBeats_s):SAMPLE_RATE(sr),_bpm_s(bpm_s),_numBeats_s(numBeats_s){}
+            beats(const int & sr, const BPM_sig & bpm_s, const Num_sig & numBeats_s)
+                 :SAMPLE_RATE(sr),_bpm_s(bpm_s),_numBeats_s(numBeats_s){}
 
             auto operator()(const int & t){
                 return (_numBeats_s(t)/_bpm_s(t))*SECONDS_PER_MINUTE*SAMPLE_RATE;
             };
         };
 
-
-
-        // template<typename sample, typename Note_sig>
-        // auto mtof = [](const Note_sig & n){
-        //     const sample TWO = 2.0;
-        //     const sample TWELVE = 2.0;
-        //     const sample REF_FREQ = 440.0;
-        //     const sample REF_NOTE = 69;
-        //     Note_sig _n = n;
-        //     return [&](int t){
-        //         return  REF_FREQ * pow (TWO, (_n(t) - REF_NOTE) / TWELVE);
-        //     };
-        // };
         template<typename sample, typename Note_sig>
         struct mtof { 
             const sample TWO = 2.0;
@@ -211,17 +143,6 @@ namespace signals {
             }
         };
 
-        // template<typename sample, typename Start_sig, typename End_sig, typename RampTime_sig>
-        // auto ramp = [](const Start_sig & start, const End_sig & end, const RampTime_sig & rampTimeInSamples){
-        //     Start_sig _start = start;
-        //     End_sig _end = end;
-        //     RampTime_sig _rampTime = rampTimeInSamples;
-        //     return [&](int t){
-        //         sample rt = _rampTime(t);
-        //         sample phase = (((sample)t)/((sample)rt));
-        //         return (sample) (t<rt)?_start(t)*(1.0-phase)+_end(t)*phase:_end(t);
-        //     };
-        // };
         template<typename sample, typename Start_sig, typename End_sig, typename RampTime_sig>
         struct ramp { 
             Start_sig _start;
@@ -235,30 +156,49 @@ namespace signals {
             };
         };
 
-        //template<typename Signal, typename TimeModulator>
-        auto timeTransform = [](const auto & sig, const auto & modulator){
-            auto _sig = sig;
-            auto _mod = modulator;
-            return [&](int t){
+        template<typename Signal, typename TimeModulator>
+        struct _timeTransform { 
+            Signal _sig;
+            TimeModulator _mod;
+            _timeTransform(const Signal & sig, const TimeModulator & modulator)
+                         :_sig(sig),_mod(modulator){}
+            auto operator () (const int & t){
                 return _sig(_mod(t));
             };
         };
 
-        // template<typename TimeSignal>
-        auto shift = [](const auto & n){
-            auto _n = n;
-            return [&](int t){
+        template<typename Signal, typename TimeModulator>
+        auto timeTransform(const Signal & signal, const TimeModulator & modulator){
+            return _timeTransform<Signal, TimeModulator>(signal, modulator);
+        }
+
+        template<typename TimeSignal>
+        struct _shift { 
+            TimeSignal _n;
+            _shift(const TimeSignal & n):_n(n){}
+            auto operator()(const int & t){
                 return t+_n(t);
             };
         };
 
-        // template<typename Signal>
-        auto invert = [](const auto & signal){
-            auto _signal = signal;
-            return [&](const int & t){
+        template<typename TimeSignal>
+        auto shift(const TimeSignal & time_s){
+            return _shift<TimeSignal>(time_s);
+        }
+
+        template<typename Signal>
+        struct _invert {
+            Signal _signal;
+            _invert(const Signal & signal):_signal(signal){}
+            auto operator()(const int & t){
                 return -_signal(t);
             };
         };
+
+        template<typename Signal>
+        auto invert(const Signal & signal){
+            return _invert<Signal>(signal);
+        }
 
 
         template<typename sample, typename AttackTime_sig, typename DecayTime_sig, typename SustainValue_sig, typename SustainTime_sig, typename ReleaseTime_sig>
@@ -346,14 +286,9 @@ namespace signals {
 
             phasor(const int & sr,const frequency_signal & f):sampleRate(sr),freq(f){}
             sample operator ()(const int & t) {
-                // impure but with quality
                 frequency phi = freq(t)/sampleRate;
                 phase = fmod(phase+phi,1.0);
                 return phase;
-
-                // pure functional but with decaying quality
-                // frequency time_in_seconds = t/sampleRate;
-                // return fmod(time_in_seconds*freq(t),1.0);
             }
             
         };
@@ -367,8 +302,6 @@ namespace signals {
 
             sinOsc(const int & sr, const frequency_signal & f):sampleRate(sr), freq(f){}
             sample operator()(const int & t){
-
-                // high quality - impure NCO
                 sample increment = TWO_PI*freq(t)/sampleRate;
                 phase = fmod(phase+increment,TWO_PI);
                 return sin(phase);
