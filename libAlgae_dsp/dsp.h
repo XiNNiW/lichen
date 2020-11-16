@@ -1,5 +1,4 @@
-#ifndef DSP_H
-#define DSP_H
+#pragma once
 
 #include <math.h>
 #include <vector>
@@ -240,12 +239,6 @@ namespace signals {
             };
         };
 
-        auto _loop = [](int loopStartInSamples, int loopStopInSamples){
-            return [=](int t){
-                return t%(loopStopInSamples-loopStartInSamples)+ loopStartInSamples;
-            };
-        };
-
         template<typename StartSample_signal, typename EndTime_signal, typename SignalToLoop>
         struct loop{
             SignalToLoop s;
@@ -428,6 +421,3 @@ namespace signals {
 
 
 }
-
-#endif
-

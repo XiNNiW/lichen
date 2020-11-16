@@ -2,7 +2,8 @@
 #include <math.h>
 #include <string.h>
 #include <soundio/soundio.h>
-#include "libDSP/dsp.h"
+#include <libAlgae_dsp/dsp.h>
+#include "libFungi_interpreter/src/eval.h"
 
 static const double PI = 3.14159265358979323846264338328;
 static double seconds_offset = 0.0;

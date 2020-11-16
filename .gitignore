@@ -1,7 +1,10 @@
-MyAwesomeProject
+Lichen
 .vscode/**/*
 CMakeFiles/**/*
 cmake_install.cmake
 CMakeCache.txt
-libLibDsp.a
+*.a
 Makefile
+sporelang_bison.cpp
+sporelang_bison.hpp
+sporelang_flex.cpp
