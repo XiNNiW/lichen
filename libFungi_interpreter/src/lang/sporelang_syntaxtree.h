@@ -1,134 +1,239 @@
 #pragma once
 #include <string>
+#include "interpreter_interface.h"
 
 struct ASTNode{
+    virtual void identify(INodeInspector* visitor)=0;
+};
+
+struct RootNode:ASTNode{
+    ASTNode* program;
+    RootNode(ASTNode* program):program(program){};
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+
+
+struct StatementsNode: ASTNode{
+    StatementsNode* statements;
+    ASTNode* statement;
+    StatementsNode(StatementsNode* statements, ASTNode* statement)
+    :statements(statements),statement(statement){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+
+};
+
+struct NotOperatorNode:ASTNode{
+    ASTNode* expression;
+    NotOperatorNode(ASTNode* expression)
+    :expression(expression){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
     
 };
-struct RootNode:ASTNode{
-    RootNode(ASTNode* program);
-};
-struct StatementsNode:ASTNode{
-    StatementsNode(StatementsNode* statements, ASTNode* statement);
-};
-struct FloatNode:ASTNode{
-    FloatNode(double value);
 
-};
-struct IntegerNode:ASTNode{
-    IntegerNode(long value);
-
-};
-struct StringNode:ASTNode{
-    StringNode(std::string value);
-
-};
-struct IdentifierNode:ASTNode{
-    IdentifierNode(std::string value);
-
-};
-struct NotOperatorNode:ASTNode{
-    NotOperatorNode(ASTNode* expression);
-
-};
 struct LambdaNode:ASTNode{
-    LambdaNode(ASTNode* arguments, ASTNode* expression);
-
+    ASTNode* arguments;
+    ASTNode* expression;
+    LambdaNode(ASTNode* arguments, ASTNode* expression)
+    :arguments(arguments),expression(expression){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
+
 struct IfElseNode:ASTNode{
-    IfElseNode(ASTNode* expression, ASTNode* statements_ifTrue, ASTNode* statements_ifFalse);
+    ASTNode* expression;
+    ASTNode* statements_ifTrue;
+    ASTNode* statements_ifFalse;
+    IfElseNode(ASTNode* expression, ASTNode* statements_ifTrue, ASTNode* statements_ifFalse)
+    :expression(expression),statements_ifTrue(statements_ifTrue),statements_ifFalse(statements_ifFalse){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IfNode:ASTNode{
-    IfNode(ASTNode* expression, ASTNode* statements_ifTrue);
+    ASTNode* expression;
+    ASTNode* statements_ifTrue;
+    IfNode(ASTNode* expression, ASTNode* statements_ifTrue)
+    :expression(expression),statements_ifTrue(statements_ifTrue){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct AssignmentNode:ASTNode{
-    AssignmentNode(IdentifierNode* name, ASTNode* expression);
+    IdentifierNode* name;
+    ASTNode* expression;
+    AssignmentNode(IdentifierNode* name, ASTNode* expression)
+    :name(name),expression(expression){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct AssociateNode:ASTNode{
-    AssociateNode(ASTNode* expressionToEvalSecond, ASTNode* expressionToEvalFirst);
+    ASTNode* expressionToEvalSecond;
+    ASTNode* expressionToEvalFirst;
+    AssociateNode(ASTNode* expressionToEvalSecond, ASTNode* expressionToEvalFirst)
+    :expressionToEvalSecond(expressionToEvalSecond),expressionToEvalFirst(expressionToEvalFirst){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct CompositionNode:ASTNode{
-    CompositionNode(ASTNode* expression, IdentifierNode* function);
+    ASTNode* expression;
+    IdentifierNode* function;
+    CompositionNode(ASTNode* expression, IdentifierNode* function)
+    :expression(expression),function(function){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsEqualOperatorNode:ASTNode{
-    IsEqualOperatorNode(ASTNode* left,ASTNode* right);
+    ASTNode* left;
+    ASTNode* right;
+    IsEqualOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsGreaterThanOrEqualOperatorNode:ASTNode{
-    IsGreaterThanOrEqualOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    IsGreaterThanOrEqualOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsGreaterThanNode:ASTNode{
-    IsGreaterThanNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    IsGreaterThanNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsNotEqualOperatorNode:ASTNode{
-    IsNotEqualOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    IsNotEqualOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsLessThanOrEqualOperatorNode:ASTNode{
-    IsLessThanOrEqualOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    IsLessThanOrEqualOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct IsLessThanOperatorNode:ASTNode{
-    IsLessThanOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    IsLessThanOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct DivideOperatorNode:ASTNode{
-    DivideOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    DivideOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct MultiplyOperatorNode:ASTNode{
-    MultiplyOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    MultiplyOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct AddOperatorNode:ASTNode{
-    AddOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    AddOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct SubtractOperatorNode:ASTNode{
-    SubtractOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    SubtractOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct AndOperatorNode:ASTNode{
-    AndOperatorNode(ASTNode* left,ASTNode* right);
+    ASTNode* left;
+    ASTNode* right;
+    AndOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct OrOperatorNode:ASTNode{
-    OrOperatorNode(ASTNode* left,ASTNode* right);
+    ASTNode* left;
+    ASTNode* right;
+    OrOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
 struct XorOperatorNode:ASTNode{
-    XorOperatorNode(ASTNode* left,ASTNode* right);
-
+    ASTNode* left;
+    ASTNode* right;
+    XorOperatorNode(ASTNode* left,ASTNode* right)
+    :left(left),right(right){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
-
-
-
-struct INodeInspector{
-    virtual void inspect(const RootNode& node)=0;
-    virtual void inspect(const StatementsNode* node)=0;
-    virtual void inspect(const IfElseNode* node)=0;
-    virtual void inspect(const IfNode* node)=0;
-    virtual void inspect(const AssignmentNode* node)=0;
-    virtual void inspect(const AssociateNode* node)=0;
-    virtual void inspect(const CompositionNode* node)=0;
-    virtual void inspect(const IsEqualOperatorNode* node)=0;
-    virtual void inspect(const IsGreaterThanOrEqualOperatorNode* node)=0;
-    virtual void inspect(const IsGreaterThanNode* node)=0;
-    virtual void inspect(const IsNotEqualOperatorNode* node)=0;
-    virtual void inspect(const IsLessThanOrEqualOperatorNode* node)=0;
-    virtual void inspect(const IsLessThanOperatorNode& node)=0;
-    virtual void inspect(const DivideOperatorNode* node)=0;
-    virtual void inspect(const MultiplyOperatorNode* node)=0;
-    virtual void inspect(const AddOperatorNode* node)=0;
-    virtual void inspect(const SubtractOperatorNode* node)=0;
-    virtual void inspect(const AndOperatorNode* node)=0;
-    virtual void inspect(const OrOperatorNode* node)=0;
-    virtual void inspect(const XorOperatorNode* node)=0;
-    virtual void inspect(const FloatNode* node)=0;
-    virtual void inspect(const IntegerNode* node)=0;
-    virtual void inspect(const StringNode* node)=0;
-    virtual void inspect(const IdentifierNode* node)=0;
-
-    virtual void inspect(const ASTNode* node)=0;
-
+struct FloatNode:ASTNode{
+    double value;
+    FloatNode(double value):value(value){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
 };
-
-
+struct IntegerNode:ASTNode{
+    long value;
+    IntegerNode(long value):value(value){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+struct StringNode:ASTNode{
+    std::string value;
+    StringNode(std::string value):value(value){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+struct IdentifierNode:ASTNode{
+    std::string value;
+    IdentifierNode(std::string value):value(value){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};

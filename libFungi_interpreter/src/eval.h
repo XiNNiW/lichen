@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include "interpreter/interpreter.h"
-#include <sporelang_bison.hpp>
+#include <lib/sporelang_bison.hpp>
 #include "lang/sporelang_syntaxtree.h"
 #include <sstream>
 
