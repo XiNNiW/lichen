@@ -18,45 +18,71 @@ struct SporeDataVariant {
         LAMBDA as_lambda;
         LIST as_list;
         MAP as_map;
-    } data;
-    // SporeDataVariant(){
-    //     type=t_int;
-    //     new (&as_integer) INTEGER(0);
-    // }
-    //4. MOVE
-    SporeDataVariant(const SporeDataVariant&& v)
-    
-    {   
-        std::cout << "in move constructor";
-        type =std::move(v.type);
-        switch(type){
+    };
+    friend void swap(SporeDataVariant& v1, SporeDataVariant& v2){
+        std::cout <<"in swap fmethod" << std::endl;
+        using std::swap;
+
+        swap(v1.type,v2.type);
+        switch(v1.type){
             case t_int:
-                new (&as_integer) INTEGER(std::move(v.as_integer));
+                swap(v1.as_integer,v2.as_integer);
                 break;
             case t_float:
-                new (&as_float) FLOAT(std::move(v.as_float));
+                swap(v1.as_float, v2.as_float);
                 break;
             case t_string:
-                new (&as_string) STRING(std::move(v.as_string));
-                std::cout << "value assigned: "<<as_string<<std::endl;
+                swap(v1.as_string, v2.as_string);
                 break;
             case t_signal:
-                new (&as_signal) SIGNAL(std::move(v.as_signal));
+                swap(v1.as_signal, v2.as_signal);
                 break;
             case t_lambda:
-                new (&as_lambda) LAMBDA(std::move(v.as_lambda));
+                swap(v1.as_lambda, v2.as_lambda);
                 break;
             case t_list:
-                new (&as_list) LIST(std::move(v.as_list));
+                swap(v1.as_list, v2.as_list);
                 break;
             case t_map:
-                new (&as_map) MAP(std::move(v.as_map));
+                swap(v1.as_map,v2.as_map);
                 break;
-            default: 
-                std::cout<<"OH SHIT"<<std::endl;               
+            default:
+                break;
+        }
+    }
+    SporeDataVariant(){
+        type = t_int;
+        as_integer = 0;
+    }
+    //1. DESTRUCTOR
+    ~SporeDataVariant() {
+        switch (type){
+            case t_int:
+                as_integer.~INTEGER();
+                break;
+            case t_float:
+                as_float.~FLOAT();
+                break;
+            case t_string:
+                as_string.~STRING();
+                break;
+            case t_signal:
+                as_signal.~SIGNAL();
+                break;
+            case t_lambda:
+                as_lambda.~LAMBDA();
+                break;
+            case t_list:
+                as_list.~LIST();
+                break;
+            case t_map:
+                as_map.~MAP();
+                break;
+            default:
                 break;
 
         }
+        
     }
     //2. COPY
     SporeDataVariant(const SporeDataVariant& v){
@@ -92,6 +118,63 @@ struct SporeDataVariant {
                 break;
 
         }
+    }
+    //3. COPY ASSIGNMENT
+    SporeDataVariant& operator = (const SporeDataVariant v){
+        std::cout << "in overloaded assignment"<<std::endl;
+        swap(*this, v); 
+        return *this;
+    }
+    //4. MOVE
+    SporeDataVariant(SporeDataVariant&& v) noexcept
+    :SporeDataVariant()
+    {   
+        std::cout << "in move constructor";
+        swap(*this,v);
+        
+    }
+    //5. MOVE ASSIGNMENT
+    SporeDataVariant operator = (const SporeDataVariant&& v){
+        std::cout << "in overloaded move op..."<<std::endl;
+        // new SporeDataVariant(v);
+        type = std::move(v.type);
+        switch(type){
+            case t_int:
+                // as_integer = INTEGER();
+                new (&as_integer) INTEGER(std::move(v.as_integer));
+                break;
+            case t_float:
+                // as_float = FLOAT();
+                new (&as_float) FLOAT(std::move(v.as_float));
+                break;
+            case t_string:
+                // as_string = STRING();
+                std::cout << "in copy constructor"<<std::endl;
+                std::cout << "it is: "<<std::move(v.as_string)<<std::endl;
+                // as_string = STRING(v.as_string);
+                new (&as_string) STRING(v.as_string);
+                std::cout << "value assigned: "<<std::move(as_string)<<std::endl;
+                break;
+            case t_signal:
+                new (&as_signal) SIGNAL(std::move(v.as_signal));
+                break;
+            case t_lambda:
+                new (&as_lambda) LAMBDA(std::move(v.as_lambda));
+                break;
+            case t_list:
+                // LIST temp = LIST(v.as_list.size());
+                // std::copy(v.as_list.begin(),v.as_list.end(),temp);
+                // as_list = SporeDataVariant(temp).as_list;
+                new (&as_list) LIST(std::move(v.as_list));
+                break;
+            case t_map:
+                new (&as_map) MAP(std::move(v.as_map));
+                break;
+            default:                
+                break;
+        }
+
+        return *this;
     }
     SporeDataVariant(const INTEGER& value)
     :type(t_int)
@@ -157,98 +240,8 @@ struct SporeDataVariant {
         std::cout << "making map..." << std::endl;
 
     }
-//3. COPY ASSIGNMENT
-    SporeDataVariant operator = (const SporeDataVariant& v){
-        std::cout << "in overloaded assignment"<<std::endl;
-        // new SporeDataVariant(v);
-        type = v.type;
-        switch(type){
-            case t_int:
-                // as_integer = INTEGER();
-                new (&as_integer) INTEGER(v.as_integer);
-                break;
-            case t_float:
-                // as_float = FLOAT();
-                new (&as_float) FLOAT(v.as_float);
-                break;
-            case t_string:
-                // as_string = STRING();
-                std::cout << "in copy constructor"<<std::endl;
-                std::cout << "it is: "<<v.as_string<<std::endl;
-                // as_string = STRING(v.as_string);
-                new (&as_string) STRING(v.as_string);
-                std::cout << "value assigned: "<<as_string<<std::endl;
-                break;
-            case t_signal:
-                new (&as_signal) SIGNAL(v.as_signal);
-                break;
-            case t_lambda:
-                new (&as_lambda) LAMBDA(v.as_lambda);
-                break;
-            case t_list:
-                // LIST temp = LIST(v.as_list.size());
-                // std::copy(v.as_list.begin(),v.as_list.end(),temp);
-                // as_list = SporeDataVariant(temp).as_list;
-                new (&as_list) LIST(v.as_list);
-                break;
-            case t_map:
-                new (&as_map) MAP(v.as_map);
-                break;
-            default:                
-                break;
-        }
 
-        return *this;
-        
 
-        
-    }
-//5. MOVE ASSIGNMENT
-    SporeDataVariant operator = (const SporeDataVariant&& v){
-        std::cout << "in overloaded move op..."<<std::endl;
-        // new SporeDataVariant(v);
-        type = std::move(v.type);
-        switch(type){
-            case t_int:
-                // as_integer = INTEGER();
-                new (&as_integer) INTEGER(std::move(v.as_integer));
-                break;
-            case t_float:
-                // as_float = FLOAT();
-                new (&as_float) FLOAT(std::move(v.as_float));
-                break;
-            case t_string:
-                // as_string = STRING();
-                std::cout << "in copy constructor"<<std::endl;
-                std::cout << "it is: "<<std::move(v.as_string)<<std::endl;
-                // as_string = STRING(v.as_string);
-                new (&as_string) STRING(v.as_string);
-                std::cout << "value assigned: "<<std::move(as_string)<<std::endl;
-                break;
-            case t_signal:
-                new (&as_signal) SIGNAL(std::move(v.as_signal));
-                break;
-            case t_lambda:
-                new (&as_lambda) LAMBDA(std::move(v.as_lambda));
-                break;
-            case t_list:
-                // LIST temp = LIST(v.as_list.size());
-                // std::copy(v.as_list.begin(),v.as_list.end(),temp);
-                // as_list = SporeDataVariant(temp).as_list;
-                new (&as_list) LIST(std::move(v.as_list));
-                break;
-            case t_map:
-                new (&as_map) MAP(std::move(v.as_map));
-                break;
-            default:                
-                break;
-        }
-
-        return *this;
-        
-
-        
-    }
 
     bool operator == (const SporeDataVariant& v){
         std::cout<< "evaluating equality"<<std::endl;
@@ -285,34 +278,5 @@ struct SporeDataVariant {
 
         return areEqual;
     }
-//1. DESTRUCTOR
-    ~SporeDataVariant() {
-        switch (type){
-            case t_int:
-                as_integer.~INTEGER();
-                break;
-            case t_float:
-                as_float.~FLOAT();
-                break;
-            case t_string:
-                as_string.~STRING();
-                break;
-            case t_signal:
-                as_signal.~SIGNAL();
-                break;
-            case t_lambda:
-                as_lambda.~LAMBDA();
-                break;
-            case t_list:
-                as_list.~LIST();
-                break;
-            case t_map:
-                as_map.~MAP();
-                break;
-            default:
-                break;
 
-        }
-        
-    }
 };
