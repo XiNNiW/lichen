@@ -95,7 +95,7 @@ struct SporeDataVariant {
     }
     //2. COPY
     // SporeDataVariant(const SporeDataVariant& v) = delete;
-    SporeDataVariant(SporeDataVariant& v)
+    SporeDataVariant(SporeDataVariant& v) noexcept
     // :SporeDataVariant()
     {
         std::cout<<"input value in copy constructor now has: "<<v.as_string<<std::endl;
