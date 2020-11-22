@@ -1,4 +1,5 @@
 #pragma once
+#include "../interpreter/data_varient.h"
 
 struct INodeInspector{
     virtual void inspect(class RootNode*)=0;

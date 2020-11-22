@@ -73,13 +73,14 @@ statement:
                                                 { $$ = new IfElseNode($3, $6, $10); }
     | IF OPEN_PAREN expression CLOSE_PAREN OPEN_BRACE statements CLOSE_BRACE
                                                 { $$ = new IfNode($3, $6); }
-    | expression STATEMENT_END                  { $$ = $1; }
+    | expression LAMBDA_BEGIN OPEN_BRACKET statements CLOSE_BRACKET        
+                                                { $$ = new LambdaNode($1, new BlockNode($4)); }
+    | expression STATEMENT_END                  { $$ = new StatementsNode($1); }
 
 expression:
       SUBTRACT_OP expression %prec NEG          { $$ = new SubtractOperatorNode(new IntegerNode(0), $2); }
     | NOT_OP expression                         { $$ = new NotOperatorNode($2); }
     | IDENTIFIER ASSIGNMENT expression          { $$ = new AssignmentNode(new IdentifierNode($1), $3); }
-    | expression LAMBDA_BEGIN expression        { $$ = new LambdaNode($1, $3); }
     | expression ASSOCIATE_OP expression STATEMENT_END        { $$ = new AssociateNode($1,$3); }
     | expression COMPOSE_OP IDENTIFIER       { $$ = new CompositionNode($1, new IdentifierNode($3)); }
     | expression IS_EQUAL_OP expression         { $$ = new IsEqualOperatorNode($1, $3); }

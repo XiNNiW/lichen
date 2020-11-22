@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 enable_testing()
 find_package(GTest REQUIRED)
+include(GoogleTest)
 
 find_package(SoundIo REQUIRED)
 include_directories(${SOUNDIO_INCLUDE_DIR})
@@ -52,11 +53,37 @@ target_link_libraries(Lichen ${SOUNDIO_LIBRARY})
 target_link_libraries(Lichen LibFungi_interpreter)
 
 #Tests
-add_executable(interpreter_tests libFungi_interpreter/test/interpreter_test.cpp)
-add_executable(varient_tests libFungi_interpreter/test/varient_test.cpp)
-target_link_libraries(interpreter_tests GTest::GTest GTest::Main)
-target_link_libraries(varient_tests GTest::GTest GTest::Main)
+add_executable( LichenTests 
+    libFungi_interpreter/test/interpreter_test.cpp
+    libFungi_interpreter/test/semantic_analyzer_test.cpp
+    libFungi_interpreter/test/data_variant_test.cpp
+    libFungi_interpreter/test/symbol_variant_test.cpp
+    libFungi_interpreter/test/scoped_symbol_table_test.cpp
+    libFungi_interpreter/test/activation_record_test.cpp
+    libFungi_interpreter/test/maybe_test.cpp
+    libFungi_interpreter/test/either_test.cpp
+)
+target_link_libraries(LichenTests GTest::GTest GTest::Main)
+gtest_discover_tests(LichenTests)
 
-add_test(AllTestsInLichen interpreter_tests)
-add_test(AllTestsInLichen varient_tests)
+# add_executable(interpreter_tests libFungi_interpreter/test/interpreter_test.cpp)
+# target_link_libraries(interpreter_tests GTest::GTest GTest::Main)
+# gtest_discover_tests(interpreter_tests)
+
+# add_executable(varient_tests libFungi_interpreter/test/varient_test.cpp)
+# target_link_libraries(varient_tests GTest::GTest GTest::Main)
+# gtest_discover_tests(varient_tests)
+
+# add_executable(symbol_tests libFungi_interpreter/test/symbol_test.cpp)
+# target_link_libraries(symbol_tests GTest::GTest GTest::Main)
+# gtest_discover_tests(symbol_tests)
+
+# add_executable(scoped_symbol_table_tests libFungi_interpreter/test/scoped_symbol_table_test.cpp)
+# target_link_libraries(scoped_symbol_table_tests GTest::GTest GTest::Main)
+# gtest_discover_tests(scoped_symbol_table_tests)
+
+# add_executable(activation_record_tests libFungi_interpreter/test/activation_record_test.cpp)
+# target_link_libraries(activation_record_tests GTest::GTest GTest::Main)
+# gtest_discover_tests(activation_record_tests)
+
 

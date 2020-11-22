@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include "interpreter_interface.h"
+#include "../interpreter/data_varient.h"
+#include <iostream>
 
 struct ASTNode{
     virtual void identify(INodeInspector* visitor)=0;
@@ -18,8 +20,23 @@ struct RootNode:ASTNode{
 struct StatementsNode: ASTNode{
     StatementsNode* statements;
     ASTNode* statement;
+
     StatementsNode(StatementsNode* statements, ASTNode* statement)
     :statements(statements),statement(statement){}
+
+    StatementsNode(ASTNode* statement):statement(statement){}
+    
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+
+};
+
+struct BlockNode: ASTNode{
+    StatementsNode* statements;
+    BlockNode(StatementsNode* statements)
+    :statements(statements)
+    {}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
     }
@@ -38,9 +55,9 @@ struct NotOperatorNode:ASTNode{
 
 struct LambdaNode:ASTNode{
     ASTNode* arguments;
-    ASTNode* expression;
-    LambdaNode(ASTNode* arguments, ASTNode* expression)
-    :arguments(arguments),expression(expression){}
+    BlockNode* block;
+    LambdaNode(ASTNode* arguments, BlockNode* block)
+    :arguments(arguments),block(block){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
     }
@@ -217,7 +234,7 @@ struct FloatNode:ASTNode{
     }
 };
 struct IntegerNode:ASTNode{
-    long value;
+    int value;
     IntegerNode(long value):value(value){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);

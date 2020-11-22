@@ -1,0 +1,5 @@
+if(EXISTS "/home/xinniw/Development/learningcmake/activation_record_tests[1]_tests.cmake")
+  include("/home/xinniw/Development/learningcmake/activation_record_tests[1]_tests.cmake")
+else()
+  add_test(activation_record_tests_NOT_BUILT activation_record_tests_NOT_BUILT)
+endif()
