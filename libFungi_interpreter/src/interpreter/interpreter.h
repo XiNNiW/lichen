@@ -8,21 +8,31 @@
 #include <cassert>
 #include "either.h"
 #include "runtime_error.h"
+#include "call_stack.h"
 
 using E = Either<RuntimeError, SporeDataVariant>;
 
 struct FungiInterpreter:INodeInspector{
     E curretResult=E::rightOf(SporeDataVariant());
+    CallStack callStack = CallStack();
     //stack
-    FungiInterpreter(){}
+    FungiInterpreter(){
+        callStack.push(ActivationRecord("PROGRAM", ActivationRecord::t_program,1));
+    }
     void inspect( RootNode* node){
         //should not work if result is not a signal and return
         //SporeDataVariant result = node->identify(this);
         
         //return result.type==SporeDataVariant::t_signal?result:SporeDataVariant();
+        node->program->identify(this);
         curretResult = E(SporeDataVariant());
+
     }
-    void inspect( StatementsNode* node){}
+    void inspect( StatementsNode* node){
+        if(node->statements)
+            node->statements->identify(this);
+        node->statement->identify(this);
+    }
     void inspect( IfElseNode* node){}
     void inspect( IfNode* node){
         // SporeDataVariant conditionfunction = node->expression->identify(this);
@@ -30,6 +40,9 @@ struct FungiInterpreter:INodeInspector{
     }
     void inspect( AssignmentNode* node){
         // will need to store the identifier in the interpreter context
+        node->expression->identify(this);
+        callStack.peek().set(node->name->value,curretResult.getRight());
+        curretResult = E(SporeDataVariant());
     }
     void inspect( AssociateNode* node){}
     void inspect( CompositionNode* node){
@@ -83,9 +96,13 @@ struct FungiInterpreter:INodeInspector{
         });
     }
     void inspect( AddOperatorNode* node){
-        // SporeDataVariant lhs = node->left->identify(this);
-        // SporeDataVariant rhs = node->right->identify(this);
-        // return SporeDataVariant(lhs+rhs);
+    //    node->left->identify(this);
+    //     curretResult=curretResult.flatMap([&](SporeDataVariant lhs){
+    //         node->right->identify(this);
+    //         return curretResult.flatMap([&](SporeDataVariant rhs){
+    //             return lhs+rhs;
+    //         });
+    //     });
     }
     void inspect( SubtractOperatorNode* node){
         // SporeDataVariant lhs = node->left->identify(this);
@@ -108,19 +125,19 @@ struct FungiInterpreter:INodeInspector{
         // return SporeDataVariant(lhs^rhs);
     }
     void inspect( FloatNode* node){
-        curretResult = SporeDataVariant(node->value);
+        curretResult = E(SporeDataVariant(node->value));
     }
     void inspect( IntegerNode* node){
-        curretResult = SporeDataVariant(node->value);
+        curretResult = E(SporeDataVariant(node->value));
     }
     void inspect( StringNode* node){
-        curretResult = SporeDataVariant(node->value);
+        curretResult = E(SporeDataVariant(node->value));
     }
     void inspect( IdentifierNode* node){
         //return SporeDataVariant(node->value)
         //should look up identifier from built in functions
         //if not found it should look in interpreter context for variables
-        curretResult = SporeDataVariant();
+        curretResult = callStack.peek().get(node->value);
     }
 
     void inspect( ASTNode* node){
