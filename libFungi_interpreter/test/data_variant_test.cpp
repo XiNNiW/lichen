@@ -6,6 +6,7 @@
 #include <functional>
 #include <unordered_map>
 #include "../src/interpreter/data_varient.h"
+#include "error.h"
 #include <iostream>
 
 typedef SporeDataVariant SPV;
@@ -21,7 +22,9 @@ TEST(DataVariantTest, IsTaggedUnionOfTemplateArgs) {
             SporeDataVariant(std::string("goober")),
             SporeDataVariant(std::vector<SporeDataVariant>({SporeDataVariant(42)})),
             SporeDataVariant(Signal<double,int>(std::function<double(int)>([](int t){return 0;}))),
-            SporeDataVariant(std::function<SporeDataVariant(SporeDataVariant)>([](const SporeDataVariant& f){return f;}))
+            SporeDataVariant(std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>([](const SporeDataVariant& f){
+                return Either<SporeError,SporeDataVariant>::rightOf(f);
+            }))
 
         }
     );
@@ -43,7 +46,8 @@ TEST(DataVariantTest, IsTaggedUnionOfTemplateArgs) {
     EXPECT_EQ(SporeDataVariant::t_signal ,foo[6].type);
     EXPECT_EQ(0, foo[6].as_signal(0));
     EXPECT_EQ(SporeDataVariant::t_lambda ,foo[7].type);
-    EXPECT_EQ(0 ,foo[7].as_lambda(SporeDataVariant(0)).as_integer);
+    EXPECT_TRUE(foo[7].as_lambda(SporeDataVariant(0)).isRight());
+    EXPECT_EQ(0 ,foo[7].as_lambda(SporeDataVariant(0)).getRight().as_integer);
 
     // std::unordered_map<SporeDataVariant,SporeDataVariant,FakeHash> myMap({SporeDataVariant("goob"),SporeDataVariant(42)});
 }
@@ -130,44 +134,44 @@ TEST(DataVariantTest, CanBePlacedSafelyInContainers){
 }
 
 TEST(DataVariantTest, Multiply){
-    Either<RuntimeError, SporeDataVariant> intAndInt = SporeDataVariant(5)*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> intAndInt = SporeDataVariant(5)*SporeDataVariant(4);
     ASSERT_TRUE(intAndInt.isRight());
     ASSERT_EQ(SporeDataVariant::t_int, intAndInt.getRight().type);
     ASSERT_EQ(20, intAndInt.getRight().as_integer);
 
 
-    Either<RuntimeError, SporeDataVariant> intAndFloat = SporeDataVariant(5)*SporeDataVariant(4.0);
+    Either<SporeError, SporeDataVariant> intAndFloat = SporeDataVariant(5)*SporeDataVariant(4.0);
     ASSERT_TRUE(intAndFloat.isRight());
     ASSERT_EQ(SporeDataVariant::t_float, intAndFloat.getRight().type);
     ASSERT_EQ(20.0, intAndFloat.getRight().as_float);
     
 
-    Either<RuntimeError, SporeDataVariant> floatAndInt = SporeDataVariant(5.0)*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> floatAndInt = SporeDataVariant(5.0)*SporeDataVariant(4);
     ASSERT_TRUE(floatAndInt.isRight());
     ASSERT_EQ(SporeDataVariant::t_int, floatAndInt.getRight().type);
     ASSERT_EQ(20, floatAndInt.getRight().as_integer);
 
-    Either<RuntimeError, SporeDataVariant> intAndBool = SporeDataVariant(5)*SporeDataVariant(false);
+    Either<SporeError, SporeDataVariant> intAndBool = SporeDataVariant(5)*SporeDataVariant(false);
     ASSERT_TRUE(intAndBool.isRight());
     ASSERT_EQ(SporeDataVariant::t_int, intAndBool.getRight().type);
     ASSERT_EQ(0, intAndBool.getRight().as_integer);
 
-    Either<RuntimeError, SporeDataVariant> boolAndInt = SporeDataVariant(true)*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> boolAndInt = SporeDataVariant(true)*SporeDataVariant(4);
     ASSERT_TRUE(boolAndInt.isRight());
     ASSERT_EQ(SporeDataVariant::t_int, boolAndInt.getRight().type);
     ASSERT_EQ(4, boolAndInt.getRight().as_integer);
 
-    Either<RuntimeError, SporeDataVariant> intAndString = SporeDataVariant(5)*SporeDataVariant("Blood");
+    Either<SporeError, SporeDataVariant> intAndString = SporeDataVariant(5)*SporeDataVariant("Blood");
     ASSERT_TRUE(intAndString.isLeft());
 
-    Either<RuntimeError, SporeDataVariant> stringAndInt = SporeDataVariant("Blood")*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> stringAndInt = SporeDataVariant("Blood")*SporeDataVariant(4);
     ASSERT_TRUE(stringAndInt.isLeft());
 
-    Either<RuntimeError, SporeDataVariant> listInt = SporeDataVariant(4)*SporeDataVariant(std::vector<SporeDataVariant>{"fred",5});
+    Either<SporeError, SporeDataVariant> listInt = SporeDataVariant(4)*SporeDataVariant(std::vector<SporeDataVariant>{"fred",5});
     ASSERT_TRUE(listInt.isLeft());
 
 
-    Either<RuntimeError, SporeDataVariant> intList = SporeDataVariant(std::vector<SporeDataVariant>{"fred",5})*SporeDataVariant(5);
+    Either<SporeError, SporeDataVariant> intList = SporeDataVariant(std::vector<SporeDataVariant>{"fred",5})*SporeDataVariant(5);
     ASSERT_TRUE(intList.isLeft());
 
     // ASSERT_EQ(SporeDataVariant::t_list, intList.type);
@@ -177,25 +181,25 @@ TEST(DataVariantTest, Multiply){
     // ASSERT_EQ(SporeDataVariant::t_int, intList.as_list[1].type);
     // ASSERT_EQ(20, intList.as_list[1].as_integer);
 
-    Either<RuntimeError, SporeDataVariant> intSignal = SporeDataVariant(5)*SporeDataVariant(std::function<double(int)>([](int t){return 4.0;}));
+    Either<SporeError, SporeDataVariant> intSignal = SporeDataVariant(5)*SporeDataVariant(std::function<double(int)>([](int t){return 4.0;}));
     ASSERT_TRUE(intSignal.isLeft());
     // ASSERT_EQ(SporeDataVariant::t_signal, intSignal.type);
     // ASSERT_EQ(20.0, intSignal.as_signal(77));
     // ASSERT_EQ(20.0, intSignal.as_signal(7));
     
-    Either<RuntimeError, SporeDataVariant> signalInt = SporeDataVariant(std::function<double(int)>([](int t){return 5.0;}))*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> signalInt = SporeDataVariant(std::function<double(int)>([](int t){return 5.0;}))*SporeDataVariant(4);
     ASSERT_TRUE(signalInt.isLeft());
     // ASSERT_EQ(SporeDataVariant::t_signal, intSignal.type);
     // ASSERT_EQ(20.0, signalInt.as_signal(77));
     // ASSERT_EQ(20.0, signalInt.as_signal(7));
 
-    Either<RuntimeError, SporeDataVariant> intLambda = SporeDataVariant(5)*SporeDataVariant(std::function<SporeDataVariant(SporeDataVariant)>([](const SporeDataVariant& t){return SporeDataVariant(4.0);}));
+    Either<SporeError, SporeDataVariant> intLambda = SporeDataVariant(5)*SporeDataVariant(std::function<SporeDataVariant(SporeDataVariant)>([](const SporeDataVariant& t){return SporeDataVariant(4.0);}));
     ASSERT_TRUE(intLambda.isLeft());
     // ASSERT_EQ(SporeDataVariant::t_lambda, intLambda.type);
     // ASSERT_EQ(20.0, intLambda.as_lambda(77).as_float);
     // ASSERT_EQ(20.0, intLambda.as_lambda(7).as_float);
     
-    Either<RuntimeError, SporeDataVariant> lambdaInt = SporeDataVariant(std::function<SporeDataVariant(SporeDataVariant)>([](const SporeDataVariant& t){return SporeDataVariant(5.0);}))*SporeDataVariant(4);
+    Either<SporeError, SporeDataVariant> lambdaInt = SporeDataVariant(std::function<SporeDataVariant(SporeDataVariant)>([](const SporeDataVariant& t){return SporeDataVariant(5.0);}))*SporeDataVariant(4);
     ASSERT_TRUE(intLambda.isLeft());
     // ASSERT_EQ(SporeDataVariant::t_lambda, intLambda.type);
     // ASSERT_EQ(20.0, lambdaInt.as_lambda(77).as_float);

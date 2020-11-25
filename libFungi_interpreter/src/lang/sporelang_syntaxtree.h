@@ -43,6 +43,21 @@ struct BlockNode: ASTNode{
 
 };
 
+struct ExpressionsNode: ASTNode{
+    ExpressionsNode* expressions;
+    ASTNode* expression;
+    ExpressionsNode(ExpressionsNode* expressions, ASTNode* expression)
+    :expressions(expressions), expression(expression)
+    {}
+    ExpressionsNode(ASTNode* expression)
+    :expression(expression)
+    {}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+
+
 struct NotOperatorNode:ASTNode{
     ASTNode* expression;
     NotOperatorNode(ASTNode* expression)
@@ -53,15 +68,19 @@ struct NotOperatorNode:ASTNode{
     
 };
 
-struct LambdaNode:ASTNode{
-    ASTNode* arguments;
-    BlockNode* block;
-    LambdaNode(ASTNode* arguments, BlockNode* block)
-    :arguments(arguments),block(block){}
+struct ArgsNode:ASTNode{
+    ArgsNode* arguments;
+    IdentifierNode* lastArg;
+    ArgsNode(ArgsNode* arguments, IdentifierNode* lastArg)
+    :arguments(arguments),lastArg(lastArg){}
+    ArgsNode(IdentifierNode* lastArg)
+    :lastArg(lastArg){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
     }
 };
+
+
 
 struct IfElseNode:ASTNode{
     ASTNode* expression;
@@ -88,6 +107,17 @@ struct AssignmentNode:ASTNode{
     AssignmentNode(IdentifierNode* name, ASTNode* expression)
     :name(name),expression(expression){}
     void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+struct LambdaNode:ASTNode{
+    ArgsNode* arguments;
+    // std::vector<std::string>* arguments;
+    BlockNode* block;
+    LambdaNode(ArgsNode* arguments, BlockNode* block)
+    :arguments(arguments),block(block){}
+    void identify(INodeInspector* visitor){
+        std::cout << "in the identify for lambda\n";
         visitor->inspect(this);
     }
 };
@@ -250,6 +280,16 @@ struct StringNode:ASTNode{
 struct IdentifierNode:ASTNode{
     std::string value;
     IdentifierNode(std::string value):value(value){}
+    void identify(INodeInspector* visitor){
+        visitor->inspect(this);
+    }
+};
+
+struct FunctionCallNode:ASTNode{
+    IdentifierNode* name;
+    ExpressionsNode* args;
+    FunctionCallNode(IdentifierNode* name, ExpressionsNode* args)
+    :name(name),args(args){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
     }

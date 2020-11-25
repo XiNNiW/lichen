@@ -6,6 +6,7 @@
 using std::cout;
 
 
+
 TEST(SemanticAnalyzerTest, Assignment_Expression) {
 
     SemanticAnalyzer* interpreter = new SemanticAnalyzer();
@@ -23,7 +24,7 @@ TEST(SemanticAnalyzerTest, Assignment_Expression) {
     interpreter->inspect(instructions);
     cout<<"inspected tree\n";
 
-    Either<SyntaxError,SymbolVariant> errorOrResult = interpreter->currentResult;
+    Either<SporeError,SymbolVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SymbolVariant resultSymbol = errorOrResult.getRight();
     ASSERT_EQ(SymbolVariant::t_unknown, resultSymbol.type);
@@ -46,7 +47,7 @@ TEST(SemanticAnalyzerTest, BinaryOp_Add) {
     interpreter->inspect(instructions);
     cout<<"inspected tree\n";
 
-    Either<SyntaxError,SymbolVariant> errorOrResult = interpreter->currentResult;
+    Either<SporeError,SymbolVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SymbolVariant resultSymbol = errorOrResult.getRight();
     ASSERT_EQ(SymbolVariant::t_data_variable, resultSymbol.type);
@@ -67,7 +68,7 @@ TEST(SemanticAnalyzerTest, BinaryOp_Subtract) {
     interpreter->inspect(instructions);
     cout<<"inspected tree\n";
 
-    Either<SyntaxError,SymbolVariant> errorOrResult = interpreter->currentResult;
+    Either<SporeError,SymbolVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SymbolVariant resultSymbol = errorOrResult.getRight();
     ASSERT_EQ(SymbolVariant::t_data_variable, resultSymbol.type);
@@ -88,7 +89,7 @@ TEST(SemanticAnalyzerTest, BinaryOp_Multiply) {
     interpreter->inspect(instructions);
     cout<<"inspected tree\n";
 
-    Either<SyntaxError,SymbolVariant> errorOrResult = interpreter->currentResult;
+    Either<SporeError,SymbolVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SymbolVariant resultSymbol = errorOrResult.getRight();
     ASSERT_EQ(SymbolVariant::t_data_variable, resultSymbol.type);
@@ -109,9 +110,135 @@ TEST(SemanticAnalyzerTest, BinaryOp_Divide) {
     interpreter->inspect(instruction);
     cout<<"inspected tree\n";
 
-    Either<SyntaxError,SymbolVariant> errorOrResult = interpreter->currentResult;
+    Either<SporeError,SymbolVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SymbolVariant resultSymbol = errorOrResult.getRight();
     ASSERT_EQ(SymbolVariant::t_data_variable, resultSymbol.type);
 
 }
+
+TEST(SemanticAnalyzerTest, Assignment_AndThenReference) {
+
+    SemanticAnalyzer interpreter = SemanticAnalyzer();
+    cout<<"made interpreter\n";
+    RootNode* instructions 
+        = new RootNode(
+            new StatementsNode(
+                new StatementsNode(
+                    new AssignmentNode(
+                        new IdentifierNode("foo"),
+                        new MultiplyOperatorNode(
+                            new IntegerNode(5),
+                            new IntegerNode(3)
+                        )
+                    )
+                ),
+                new AssignmentNode(
+                    new IdentifierNode("bar"),
+                    new MultiplyOperatorNode(
+                        new IdentifierNode("foo"),
+                        new IntegerNode(3)
+                    )
+                )
+            )
+        );
+    cout<<"made AST\n";
+    
+    interpreter.inspect(instructions);
+    cout<<"inspected tree\n";
+
+    Either<SporeError, SymbolVariant> errorOrResult = interpreter.currentResult;
+    ASSERT_TRUE(errorOrResult.isRight());
+    SymbolVariant resultSymbol = errorOrResult.getRight();
+    ASSERT_EQ(SymbolVariant::t_unknown, resultSymbol.type);
+
+    ASSERT_EQ(SymbolVariant::t_data_variable, interpreter.globalScope.lookup("foo").type);
+    ASSERT_EQ(SymbolVariant::t_data_variable, interpreter.globalScope.lookup("bar").type);
+
+}
+
+TEST(SemanticAnalyzerTest, Assignment_Lambda) {
+
+    SemanticAnalyzer interpreter = SemanticAnalyzer();
+    cout<<"made interpreter\n";
+    RootNode* instructions 
+        = new RootNode(
+            new StatementsNode(
+                new StatementsNode(
+                    new AssignmentNode(
+                        new IdentifierNode("foo"),
+                        new LambdaNode(
+                            new ArgsNode(new IdentifierNode("bill")),
+                            new BlockNode(
+                                new StatementsNode(
+                                    new MultiplyOperatorNode(
+                                        new IntegerNode(6),
+                                        new IdentifierNode("bill")
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
+    cout<<"made AST\n";
+    
+    interpreter.inspect(instructions);
+    cout<<"inspected tree\n";
+
+    Either<SporeError, SymbolVariant> errorOrResult = interpreter.currentResult;
+    ASSERT_TRUE(errorOrResult.isRight());
+    SymbolVariant resultSymbol = errorOrResult.getRight();
+    ASSERT_EQ(SymbolVariant::t_unknown, resultSymbol.type);
+
+    ASSERT_EQ(SymbolVariant::t_function_variable, interpreter.globalScope.lookup("foo").type);
+
+}
+
+TEST(SemanticAnalyzerTest, FunctionCall) {
+
+    SemanticAnalyzer interpreter = SemanticAnalyzer();
+    cout<<"made interpreter\n";
+    RootNode* instructions 
+        = new RootNode(
+            new StatementsNode(
+                new StatementsNode(
+                    new AssignmentNode(
+                        new IdentifierNode("foo"),
+                        new LambdaNode(
+                            new ArgsNode(new IdentifierNode("bill")),
+                            new BlockNode(
+                                new StatementsNode(
+                                    new MultiplyOperatorNode(
+                                        new IntegerNode(6),
+                                        new IdentifierNode("bill")
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                new AssignmentNode(
+                    new IdentifierNode("hannah"),
+                    new FunctionCallNode(
+                        new IdentifierNode("foo"),
+                        new ExpressionsNode(new IntegerNode(5))
+                    )
+                )
+            )
+        );
+    cout<<"made AST\n";
+    
+    interpreter.inspect(instructions);
+    cout<<"inspected tree\n";
+
+    Either<SporeError, SymbolVariant> errorOrResult = interpreter.currentResult;
+    ASSERT_TRUE(errorOrResult.isRight());
+    SymbolVariant resultSymbol = errorOrResult.getRight();
+    ASSERT_EQ(SymbolVariant::t_unknown, resultSymbol.type);
+
+    ASSERT_EQ(SymbolVariant::t_data_variable, interpreter.globalScope.lookup("hannah").type);
+
+}
+

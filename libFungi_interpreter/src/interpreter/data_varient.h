@@ -8,7 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include "either.h"
-#include "runtime_error.h"
+#include "error.h"
 
 // struct FakeHash{
 //     template<typename A>
@@ -43,6 +43,7 @@
 // };
 
 
+
 struct SporeDataVariant{
     enum {t_int, t_float, t_bool, t_string, t_list, t_map, t_signal, t_lambda, t_unknown} type;
     union{
@@ -52,7 +53,7 @@ struct SporeDataVariant{
         std::string as_string;
         std::vector<SporeDataVariant> as_list;
         Signal<double,int> as_signal;
-        std::function<SporeDataVariant(SporeDataVariant)> as_lambda;
+        std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)> as_lambda;
     };
     ~SporeDataVariant(){
         if(type==t_string){
@@ -65,7 +66,7 @@ struct SporeDataVariant{
         }
         if(type == t_lambda){
             using std::function;
-            as_lambda.~function<SporeDataVariant(SporeDataVariant)>();
+            as_lambda.~function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>();
         }
         if(type == t_signal){
             as_signal.~Signal<double,int>();
@@ -97,7 +98,7 @@ struct SporeDataVariant{
             std::copy(f.as_list.begin(), f.as_list.end(), back_inserter(as_list) );
             break;
         case t_lambda:
-            new (&as_lambda) std::function<SporeDataVariant(SporeDataVariant)>();
+            new (&as_lambda) std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>();
             as_lambda = f.as_lambda;
             break;
         case t_signal:
@@ -136,7 +137,7 @@ struct SporeDataVariant{
                 new (&as_list) std::vector<SporeDataVariant>(f.as_list);
                 break;
             case t_lambda:
-                new (&as_lambda) std::function<SporeDataVariant(SporeDataVariant)>(f.as_lambda);
+                new (&as_lambda) std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>(f.as_lambda);
                 break;
             case t_signal:
                 new (&as_signal) std::function<double(int)>(f.as_signal);
@@ -197,9 +198,9 @@ struct SporeDataVariant{
         new (&as_signal) Signal<double,int>(v);
 
     }
-    SporeDataVariant(const std::function<SporeDataVariant(SporeDataVariant)>& v)
+    SporeDataVariant(const std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>& v)
     :type(t_lambda){
-        new (&as_lambda) std::function<SporeDataVariant(SporeDataVariant)>(v);
+        new (&as_lambda) std::function<Either<SporeError,SporeDataVariant>(SporeDataVariant)>(v);
     }
 
     bool operator == (const SporeDataVariant& f) const {
@@ -240,12 +241,12 @@ struct SporeDataVariant{
         return !(*this==s);
     }
 
-    Either<RuntimeError, SporeDataVariant> operator * (const SporeDataVariant& s){
+    Either<SporeError, SporeDataVariant> operator * (const SporeDataVariant& s){
         return multiply(*this, s);
     }
 
-    friend Either<RuntimeError, SporeDataVariant> multiply(const SporeDataVariant& left,const SporeDataVariant& right){
-        using E = Either<RuntimeError, SporeDataVariant>;
+    friend Either<SporeError, SporeDataVariant> multiply(const SporeDataVariant& left,const SporeDataVariant& right){
+        using E = Either<SporeError, SporeDataVariant>;
         auto intByX = [&](){
             int a = left.as_integer;
             switch (right.type)
@@ -259,7 +260,7 @@ struct SporeDataVariant{
             default:
                 break;
             }
-            return E(RuntimeError("unsupported operation"));
+            return E(SporeError("unsupported operation: int * "+typeToString(right)));
 
         };
         auto floatByX = [&](){
@@ -275,7 +276,7 @@ struct SporeDataVariant{
             default:
                 break;
             }
-            return E(RuntimeError("unsupported operation"));
+            return E(SporeError("unsupported operation: float * "+typeToString(right)));
 
         };
         auto boolByX = [&](){
@@ -292,17 +293,17 @@ struct SporeDataVariant{
             default:
                 break;
             }
-            return E(RuntimeError("unsupported operation"));
+            return E(SporeError("unsupported operation: bool * "+typeToString(right)));
 
         };
         // auto stringByX = [&](){
-        //    return E(RuntimeError("unsupported operation"));
+        //    return E(SporeError("unsupported operation"));
         // };
         // auto listByX = [&](){
         //     // auto result = left.as_list;
         //     // for_each(result.begin(), result.end(), [&](auto el){return multiply(el,right);});
         //     // return result;
-        //     return E(RuntimeError("unsupported operation"));
+        //     return E(SporeError("unsupported operation"));
         // };
         switch (left.type)
         {
@@ -317,7 +318,44 @@ struct SporeDataVariant{
             break;
         }
 
-        return E(RuntimeError("unsupported operation"));
+        return E(SporeError("unsupported operation"));
     }
 
+    friend std::string typeToString(SporeDataVariant d){
+        switch (d.type)
+        {
+        case SporeDataVariant::t_int:
+            return "INT";
+            break;
+        case SporeDataVariant::t_float:
+            return "FLOAT";
+            break;
+        case SporeDataVariant::t_bool:
+            return "FLOAT";
+            break;
+        case SporeDataVariant::t_list:
+            return "LIST";
+            break;
+        case SporeDataVariant::t_string:
+            return "STRING";
+            break;
+        case SporeDataVariant::t_signal:
+            return "SIGNAL";
+            break;
+        case SporeDataVariant::t_lambda:
+            return "FUNCTION";
+            break;
+        case SporeDataVariant::t_unknown:
+            return "UNKNOWN";
+            break;
+        
+        default:
+            break;
+        }
+
+        return "UNKNOWN";
+}
+
 };
+
+

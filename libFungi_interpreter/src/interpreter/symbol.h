@@ -21,6 +21,7 @@ struct DataVariableSymbol{
     std::string name="";
     int scopeLevel;
 
+    DataVariableSymbol(){}
     DataVariableSymbol(const DataVariableSymbol& d)=default;
     DataVariableSymbol(const std::string& name)
     :name(name)

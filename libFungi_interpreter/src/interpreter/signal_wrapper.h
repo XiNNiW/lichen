@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 
+
 template<typename Sample,typename Time>
 struct Signal{
     std::function<Sample(Time)> _sig;
@@ -8,6 +9,7 @@ struct Signal{
         using std::function;
         _sig.~function<Sample(Time)>();
     }
+    Signal():_sig(std::function<Sample(Time)>([](int t){return 0;})){}
     Signal(const Signal& s):_sig(s._sig){}
     Signal(std::function<Sample(Time)> f):_sig(f){}
     friend Signal add(Signal a, Signal b){

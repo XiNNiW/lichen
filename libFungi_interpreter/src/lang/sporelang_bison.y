@@ -10,30 +10,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <vector>
 #include <libAlgae_dsp/dsp.h>
 #include "libFungi_interpreter/src/lang/sporelang_syntaxtree.h"
+#include <iostream>
 
-ASTNode* syntaxTreeRoot;
+RootNode* syntaxTreeRoot;
 extern int yylex();
 extern int yyparse();
 extern FILE *yyin;
 void yyerror(std::string s) {
   // fprintf(stderr, "%s\n", s);
+  std::cout<<s<<"\n";
 }
+extern void scan_string(const char* str);
+// extern yy_buffer_state;
+// typedef yy_buffer_state *YY_BUFFER_STATE;
+// extern int yyparse();
+// extern YY_BUFFER_STATE yy_scan_buffer(char *, size_t);
 
 %}
 
 %union {
-  int             INTEGER_NUM;
-  float           FLOAT_NUM;
-  const char*          STRING;
-  struct ASTNode* NODE;
+  int                    INTEGER_NUM;
+  float                  FLOAT_NUM;
+  const char*            STRING;
+  struct ASTNode*        NODE;
   struct StatementsNode* STATEMENTS_NODE;
+  struct ArgsNode* ARGS_NODE;
+  struct ExpressionsNode* EXPRESSIONS_NODE;
 }
 
 %type <STATEMENTS_NODE> statements
 %type <NODE> statement
+%type <EXPRESSIONS_NODE> expressions
 %type <NODE> expression
+%type <ARGS_NODE> args
 
 %token <INTEGER_NUM> INTEGER
 %token <FLOAT_NUM> FLOAT
@@ -62,27 +74,38 @@ void yyerror(std::string s) {
 
 %%
 
-start: statements                               {syntaxTreeRoot = new RootNode($1);}
+start: statements                               {std::cout<<"ROOT\n";syntaxTreeRoot = new RootNode($1);}
 
 statements:
-    statements statement                        { $$ = new StatementsNode($1, $2); }
-    | %empty                                    { $$ = nullptr; }
+    statements statement                        { std::cout<<"statements\n";$$ = new StatementsNode($1, $2); }
+    | %empty                                    { std::cout<<"empty statement\n";$$ = nullptr; }
 
 statement:
     IF OPEN_PAREN expression CLOSE_PAREN OPEN_BRACE statements CLOSE_BRACE ELSE OPEN_BRACE statements CLOSE_BRACE
-                                                { $$ = new IfElseNode($3, $6, $10); }
+                                                { std::cout<<"if else\n";$$ = new IfElseNode($3, $6, $10); }
     | IF OPEN_PAREN expression CLOSE_PAREN OPEN_BRACE statements CLOSE_BRACE
-                                                { $$ = new IfNode($3, $6); }
-    | expression LAMBDA_BEGIN OPEN_BRACKET statements CLOSE_BRACKET        
-                                                { $$ = new LambdaNode($1, new BlockNode($4)); }
-    | expression STATEMENT_END                  { $$ = new StatementsNode($1); }
+                                                { std::cout<<"if\n";$$ = new IfNode($3, $6); }
+    | args LAMBDA_BEGIN OPEN_BRACKET statements CLOSE_BRACKET        
+                                                { std::cout<<"lambda def\n";$$ = new StatementsNode(new LambdaNode($1, new BlockNode($4))); }
+    | expression STATEMENT_END                  { std::cout<<"expression\n";$$ = new StatementsNode($1); }
+
+args:
+    args IDENTIFIER                             {std::cout<<"args\n";$$ = new ArgsNode($1, new IdentifierNode($2));}
+    | %empty                                    {std::cout<<"empty args\n";$$ = nullptr;}
+  
+expressions:
+    expressions expression                      {std::cout<<"expr list\n";$$ = new ExpressionsNode($1, $2);}
+    | %empty                                    {std::cout<<"empty expr list\n";$$ = nullptr;}
 
 expression:
       SUBTRACT_OP expression %prec NEG          { $$ = new SubtractOperatorNode(new IntegerNode(0), $2); }
     | NOT_OP expression                         { $$ = new NotOperatorNode($2); }
-    | IDENTIFIER ASSIGNMENT expression          { $$ = new AssignmentNode(new IdentifierNode($1), $3); }
-    | expression ASSOCIATE_OP expression STATEMENT_END        { $$ = new AssociateNode($1,$3); }
-    | expression COMPOSE_OP IDENTIFIER       { $$ = new CompositionNode($1, new IdentifierNode($3)); }
+    | IDENTIFIER ASSIGNMENT expression          { std::cout<<"assignment\n";$$ = new AssignmentNode(new IdentifierNode($1), $3); }
+    | IDENTIFIER OPEN_PAREN expressions CLOSE_PAREN
+                                                { std::cout<<"func call\n";$$ = new FunctionCallNode(new IdentifierNode($1),$3);}
+    | expression ASSOCIATE_OP expression STATEMENT_END  
+                                                { $$ = new AssociateNode($1,$3); }
+    | expression COMPOSE_OP IDENTIFIER          { $$ = new CompositionNode($1, new IdentifierNode($3)); }
     | expression IS_EQUAL_OP expression         { $$ = new IsEqualOperatorNode($1, $3); }
     | expression IS_GT_OR_EQUAL_OP expression   { $$ = new IsGreaterThanOrEqualOperatorNode($1, $3); }
     | expression IS_GT_OP expression            { $$ = new IsGreaterThanNode($1, $3); }
@@ -93,14 +116,16 @@ expression:
     | expression MULT_OP expression             { $$ = new MultiplyOperatorNode($1, $3); }
     | expression ADD_OP expression              { $$ = new AddOperatorNode($1, $3); }
     | expression SUBTRACT_OP expression         { $$ = new SubtractOperatorNode($1, $3); }
-    | expression AND_OP expression         { $$ = new AndOperatorNode($1, $3); }
-    | expression OR_OP expression         { $$ = new OrOperatorNode($1, $3); }
-    | expression XOR_OP expression         { $$ = new XorOperatorNode($1, $3); }
+    | expression AND_OP expression              { $$ = new AndOperatorNode($1, $3); }
+    | expression OR_OP expression               { $$ = new OrOperatorNode($1, $3); }
+    | expression XOR_OP expression              { $$ = new XorOperatorNode($1, $3); }
     | OPEN_PAREN expression CLOSE_PAREN         { $$ = $2; }
-    | QUOTE IDENTIFIER QUOTE         { $$ = new StringNode($2); }
-    | IDENTIFIER                                { $$ = new IdentifierNode($1); }
+    | QUOTE IDENTIFIER QUOTE                    { $$ = new StringNode($2); }
+    | IDENTIFIER                                { std::cout<<"ID\n";$$ = new IdentifierNode($1); }
     | INTEGER                                   { $$ = new IntegerNode($1); }
     | FLOAT                                     { $$ = new FloatNode($1); }
 
 
+
 %%
+

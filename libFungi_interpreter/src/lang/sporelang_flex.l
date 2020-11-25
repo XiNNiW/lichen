@@ -4,11 +4,13 @@
 
 %}
 
+
 INT [0-9]+
 FLOAT [0-9]+\.[0-9]+
 ID [A-Za-z][A-Za-z0-9_]*     
 SPACE [ \t\r\n]
 NEWLINE \n
+
 
 %option noyywrap
 %option always-interactive
@@ -63,3 +65,8 @@ NEWLINE \n
 .                            {printf("fuk!");yyterminate();      }
 
 %%
+
+void scan_string(const char* str)
+{
+    yy_switch_to_buffer(yy_scan_string(str));
+}

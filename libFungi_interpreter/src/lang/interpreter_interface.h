@@ -4,11 +4,16 @@
 struct INodeInspector{
     virtual void inspect(class RootNode*)=0;
     virtual void inspect(class StatementsNode*)=0;
+    virtual void inspect(class FunctionCallNode*)=0;
+    virtual void inspect(class ExpressionsNode*)=0;
     virtual void inspect(class IfElseNode*)=0;
     virtual void inspect(class IfNode*)=0;
     virtual void inspect(class AssignmentNode*)=0;
     virtual void inspect(class AssociateNode*)=0;
     virtual void inspect(class CompositionNode*)=0;
+    virtual void inspect(class LambdaNode*)=0;
+    virtual void inspect(class ArgsNode*)=0;
+    virtual void inspect(class BlockNode*)=0;
     virtual void inspect(class IsEqualOperatorNode*)=0;
     virtual void inspect(class IsGreaterThanOrEqualOperatorNode*)=0;
     virtual void inspect(class IsGreaterThanNode*)=0;

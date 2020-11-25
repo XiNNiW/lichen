@@ -1,11 +1,11 @@
 #pragma once
 #include "../lang/interpreter_interface.h"
-#include "syntax_error.h"
+#include "error.h"
 #include "scoped_symbol_table.h"
 #include "either.h"
 #include <iostream>
 
-using E = Either<SyntaxError, SymbolVariant>;
+using E = Either<SporeError, SymbolVariant>;
 
 struct SemanticAnalyzer:INodeInspector{
     ScopedSymbolTable globalScope;
@@ -20,31 +20,41 @@ struct SemanticAnalyzer:INodeInspector{
     }
 
     void inspect(class RootNode* node){
-       //TODO: init built_in name symbols
-       node->program->identify(this);
-       currentScope = currentScope->enclosingScope;
+        //TODO: init built_in name symbols
+        std::cout << "inspecting root node\n";
+
+        node->program->identify(this);
+        // currentScope = currentScope->enclosingScope;
     }
     void inspect(class StatementsNode* node){
-        node->statement->identify(this);
-        currentResult = currentResult.flatMap([&](SymbolVariant result){
+        std::cout<< "inspecing statements";
+        if(node->statements)
             node->statements->identify(this);
+
+        currentResult = currentResult.flatMap([&](SymbolVariant result){
+            std::cout<< "inspecing final statement";
+
+            node->statement->identify(this);
             return currentResult;
         });
+        
     }
     void inspect(class BlockNode* node){
+        std::cout <<"inspecting block node\n";
         node->statements->identify(this);
     }
+
     void inspect(class IfElseNode*){
-        currentResult = E::leftOf(SyntaxError("NOT IMPLEMENTED"));
+        currentResult = E::leftOf(SporeError("NOT IMPLEMENTED"));
     }
     void inspect(class IfNode*){
-        currentResult = E::leftOf(SyntaxError("NOT IMPLEMENTED"));
+        currentResult = E::leftOf(SporeError("NOT IMPLEMENTED"));
     }
     void inspect(class AssignmentNode* node){
         node->name->identify(this);
         auto result = currentResult.flatMap([&](SymbolVariant nameSymbol){
             if(nameSymbol.type!=SymbolVariant::t_identifier)
-                return E::leftOf(SyntaxError("Bad var name."));
+                return E::leftOf(SporeError("Bad var name."));
             std::cout << "got the name...\n";
             node->expression->identify(this);
             std::cout << "evaluated expr name...\n";
@@ -53,7 +63,7 @@ struct SemanticAnalyzer:INodeInspector{
                 std::cout << "evaluated expr no error.. about to set on scope..\n";
 
                 // if(value.type != SymbolVariant::t_data_variable|value.type != SymbolVariant::t_function_variable)
-                //     return SyntaxError("bad value or function");
+                //     return SporeError("bad value or function");
                 setName(value, nameSymbol.as_identifier.name);
                 setScopeLevel(value, currentScope->scopeLevel);
                 currentScope->insert(value);
@@ -78,14 +88,35 @@ struct SemanticAnalyzer:INodeInspector{
         std::cout << "assigned result...";
        
     }
+    void inspect(ArgsNode* args){
+        std::cout << "inspecting args node\n";
+        if(args->arguments)
+            args->arguments->identify(this);
+        currentResult=currentResult.flatMap([&](SymbolVariant a){
+            std::string last = args->lastArg->value;
+            std::vector<std::string> list = std::vector<std::string>();
+            switch (a.type)
+            {
+            case SymbolVariant::t_arguments_list:
+                list = a.as_arg_list.list;
+                break;
+            
+            default:
+                list.push_back(last);
+                break;
+            }
+            return Either<SporeError,SymbolVariant>(ArgumentsListSymbol(list));
+        });
+    }
     void inspect(LambdaNode* node){
+        std::cout <<"IN LAMBDA NODE\n";
         ScopedSymbolTable lambdaScope = ScopedSymbolTable("LAMBDA",currentScope->scopeLevel+1,currentScope);
         currentScope = &lambdaScope;
 
         node->arguments->identify(this);
         currentResult = currentResult.flatMap([&](SymbolVariant argsList){
             if(argsList.type != SymbolVariant::t_arguments_list){
-                return E::leftOf(SyntaxError("Bad args for lambda"));
+                return E::leftOf(SporeError("Bad args for lambda"));
             }
                 
             ArgumentsListSymbol formalParams = argsList.as_arg_list;
@@ -104,10 +135,10 @@ struct SemanticAnalyzer:INodeInspector{
 
     }
     void inspect(class AssociateNode*){
-        currentResult = E::leftOf(SyntaxError("NOT IMPLEMENTED"));
+        currentResult = E::leftOf(SporeError("NOT IMPLEMENTED"));
     }
     void inspect(class CompositionNode*){
-        currentResult = E::leftOf(SyntaxError("NOT IMPLEMENTED"));
+        currentResult = E::leftOf(SporeError("NOT IMPLEMENTED"));
     }
     void inspect(class IsEqualOperatorNode* node){
         handleBinaryOperator<IsEqualOperatorNode>(node);
@@ -131,26 +162,7 @@ struct SemanticAnalyzer:INodeInspector{
         handleBinaryOperator<DivideOperatorNode>(node);
     }
     void inspect(class MultiplyOperatorNode* node){
-        std::cout << "about to inspect node\n";
         handleBinaryOperator<MultiplyOperatorNode>(node);
-        // if(res.isLeft()){
-        //     std::cout << "node inspected...result is error: "<<res.getLeft().message<<std::endl;
-        // } else {
-        //     switch (res.getRight().type)
-        //     {
-        //     case SymbolVariant::t_built_in:
-        //         std::cout << "node inspected...result is data named: "<<res.getRight().as_built_in.name<<std::endl;
-        //         break;
-        //     case SymbolVariant::t_data_variable:
-        //         std::cout << "node inspected...result is data named: "<<res.getRight().as_data_var.name<<std::endl;
-        //         break;
-        //     default:
-        //         std::cout << "whee\n";
-        //         break;
-        //     }
-        // }
-        // currentResult = res;
-
     }
     void inspect(class AddOperatorNode* node){
         handleBinaryOperator<AddOperatorNode>(node);
@@ -181,8 +193,38 @@ struct SemanticAnalyzer:INodeInspector{
         currentResult = E::rightOf(SymbolVariant(IdentifierSymbol(node->value)));
     }
 
+    void inspect(FunctionCallNode* node){
+        std::cout <<"IN Function call NODE\n";
+
+        currentResult = currentResult.flatMap([&](SymbolVariant previous){
+            if(currentScope->lookup(node->name->value).type==SymbolVariant::t_unknown){
+                return Either<SporeError,SymbolVariant>(SporeError("Function: \""+node->name->value+"\" not found!"));
+            }else{
+                node->args->identify(this);
+                return currentResult.flatMap([&](SymbolVariant args){
+                    // TODO check number of args against formal params... should be <= number of formal params
+                    return Either<SporeError,SymbolVariant>(DataVariableSymbol());
+                });
+            }
+        });
+
+    }
+    void inspect(class ExpressionsNode* node){
+        currentResult = currentResult.flatMap([&](SymbolVariant previous){
+            if(node->expressions)
+                node->expressions->identify(this);
+            return currentResult.flatMap([&](SymbolVariant args){
+                node->expression->identify(this);
+                return currentResult.flatMap([&](SymbolVariant last){
+                    return Either<SporeError, SymbolVariant>(SymbolVariant());
+                });
+            });
+        });
+      
+    }
+
     void inspect(class ASTNode* node){
-        std::cout << "THIS IS BAD";
+        std::cout << "THIS IS BAD\n";
         assert(false);
     }
 
