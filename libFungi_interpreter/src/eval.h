@@ -9,6 +9,7 @@
 #include <functional>
 #include <sstream>
 #include <iostream>
+#include "interpreter/algae_bridge.h"
 
 
 extern std::istream * yyin;
@@ -26,8 +27,8 @@ ErrorOrSignal _eval(std::string program){
     if(yyparse()==0){
         std::cout<<"PARSE SUCCESSFUL\n";
 
-        SemanticAnalyzer analyzer = SemanticAnalyzer();
-        FungiInterpreter interpreter = FungiInterpreter();
+        SemanticAnalyzer analyzer = SemanticAnalyzer(getAlgaeSemantics());
+        FungiInterpreter interpreter = FungiInterpreter(makeAlgaeBindings<double,double,int>(48000));
         analyzer.inspect(syntaxTreeRoot);
         std::cout<<"ANALYSIS SUCCESSFUL\n";
 

@@ -13,7 +13,7 @@ TEST(SemanticAnalyzerTest, Assignment_Expression) {
     cout<<"made interpreter\n";
     AssignmentNode* instructions 
         = new AssignmentNode(
-            new IdentifierNode("foo"),
+            "foo",
             new AddOperatorNode(
                 new IntegerNode(5),
                 new IntegerNode(3)
@@ -126,7 +126,7 @@ TEST(SemanticAnalyzerTest, Assignment_AndThenReference) {
             new StatementsNode(
                 new StatementsNode(
                     new AssignmentNode(
-                        new IdentifierNode("foo"),
+                        "foo",
                         new MultiplyOperatorNode(
                             new IntegerNode(5),
                             new IntegerNode(3)
@@ -134,7 +134,7 @@ TEST(SemanticAnalyzerTest, Assignment_AndThenReference) {
                     )
                 ),
                 new AssignmentNode(
-                    new IdentifierNode("bar"),
+                    "bar",
                     new MultiplyOperatorNode(
                         new IdentifierNode("foo"),
                         new IntegerNode(3)
@@ -166,7 +166,7 @@ TEST(SemanticAnalyzerTest, Assignment_Lambda) {
             new StatementsNode(
                 new StatementsNode(
                     new AssignmentNode(
-                        new IdentifierNode("foo"),
+                        "foo",
                         new LambdaNode(
                             new ArgsNode(new IdentifierNode("bill")),
                             new BlockNode(
@@ -205,7 +205,7 @@ TEST(SemanticAnalyzerTest, FunctionCall) {
             new StatementsNode(
                 new StatementsNode(
                     new AssignmentNode(
-                        new IdentifierNode("foo"),
+                        "foo",
                         new LambdaNode(
                             new ArgsNode(new IdentifierNode("bill")),
                             new BlockNode(
@@ -220,9 +220,9 @@ TEST(SemanticAnalyzerTest, FunctionCall) {
                     )
                 ),
                 new AssignmentNode(
-                    new IdentifierNode("hannah"),
+                    "hannah",
                     new FunctionCallNode(
-                        new IdentifierNode("foo"),
+                        "foo",
                         new ExpressionsNode(new IntegerNode(5))
                     )
                 )

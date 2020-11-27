@@ -74,6 +74,9 @@ struct FunctionVariableSymbol{
     FunctionVariableSymbol(const std::string& name, const int& scopeLevel, const std::vector<std::string>& formalParams, const BlockNode& block)
     :name(name),scopeLevel(scopeLevel),formalParams(formalParams),block(block)
     {}
+    FunctionVariableSymbol(const std::string& name, const int& scopeLevel, const std::vector<std::string>& formalParams)
+    :name(name),scopeLevel(scopeLevel),formalParams(formalParams)
+    {}
     FunctionVariableSymbol(const int& scopeLevel, const std::vector<std::string>& formalParams)
     :name(""),scopeLevel(scopeLevel),formalParams(formalParams),block(nullptr){}
     FunctionVariableSymbol(const std::vector<std::string>& formalParams)

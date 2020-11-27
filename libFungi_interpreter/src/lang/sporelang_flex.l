@@ -9,11 +9,13 @@ INT [0-9]+
 FLOAT [0-9]+\.[0-9]+
 ID [A-Za-z][A-Za-z0-9_]*     
 SPACE [ \t\r\n]
-NEWLINE \n
+NEWLINE (\n)
+SEMICOLON ;
 
 
-%option noyywrap
+/* %option noyywrap*/
 %option always-interactive
+%option debug
 
 %%
 "//"	                     {}
@@ -56,17 +58,22 @@ NEWLINE \n
 "]"                          { return(CLOSE_BRACKET);    }
 "{"                          { return(OPEN_BRACE);       }
 "}"                          { return(CLOSE_BRACE);      }
-{INT}                        { /*yyvalue.INTEGER_NUM = atoi(yytext);*/ return(INTEGER);}
-{FLOAT}                      { /*yyvalue.FLOAT_NUM = atof(yytext);*/ return(FLOAT);}
-{ID}                         { /*yyvalue.STRING = std::string(yytext);*/ return(IDENTIFIER);}
-{NEWLINE}{SPACE}*{NEWLINE}   { return(STATEMENT_END);    }
+{INT}                        { yylval.INTEGER_NUM = atoi(yytext); return(INTEGER);}
+{FLOAT}                      { yylval.FLOAT_NUM = atof(yytext); return(FLOAT);}
+{ID}                         { std::cout << "flex is chomping on... " << yytext <<"\n";yylval.STRING = yytext; return(IDENTIFIER);}
+{SEMICOLON}                  { return(STATEMENT_END);    }
 {SPACE}                      {}
 
 .                            {printf("fuk!");yyterminate();      }
+
 
 %%
 
 void scan_string(const char* str)
 {
     yy_switch_to_buffer(yy_scan_string(str));
+}
+
+int yywrap() {
+  return 1;
 }

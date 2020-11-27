@@ -82,12 +82,12 @@ struct FungiInterpreter:INodeInspector{
     void inspect( AssignmentNode* node){
         // will need to store the identifier in the interpreter context
         currentResult = currentResult.flatMap([&](SporeDataVariant previous){
-            std::cout << "inspecting assingment for "+node->name->value+"\n";
+            std::cout << "inspecting assingment for "+node->name+"\n";
             node->expression->identify(this);
             return currentResult.flatMap([&](SporeDataVariant value){
-                std::cout << "about to set "+node->name->value+"\n";
+                std::cout << "about to set "+node->name+"\n";
 
-                callStack.peek().set(node->name->value,value);
+                callStack.peek().set(node->name,value);
                 return Either<SporeError, SporeDataVariant>(SporeDataVariant());
             });
             
@@ -320,7 +320,7 @@ struct FungiInterpreter:INodeInspector{
         std::cout << "inspecting function call\n";
         // currentResult = Either<SporeError, SporeDataVariant>(SporeError("NOT IMPLEMENTED!"));
         currentResult = currentResult.flatMap([&](SporeDataVariant previous){
-            auto function = callStack.peek().get(node->name->value);
+            auto function = callStack.peek().get(node->name);
             if(function.type == SporeDataVariant::t_lambda){
                 node->args->identify(this);
                 return currentResult.flatMap([&](SporeDataVariant args){
@@ -328,11 +328,11 @@ struct FungiInterpreter:INodeInspector{
                     if(args.type == SporeDataVariant::t_list){
                         return function.as_lambda(args);
                     } else {
-                        return Either<SporeError,SporeDataVariant>(SporeError("improper args for function: "+node->name->value));
+                        return Either<SporeError,SporeDataVariant>(SporeError("improper args for function: "+node->name));
                     }
                 });
             } else {
-                return Either<SporeError,SporeDataVariant>::leftOf(SporeError(node->name->value+" is not a function"));
+                return Either<SporeError,SporeDataVariant>::leftOf(SporeError(node->name+" is not a function"));
             }
         });
 

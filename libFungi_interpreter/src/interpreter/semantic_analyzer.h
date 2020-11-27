@@ -19,6 +19,12 @@ struct SemanticAnalyzer:INodeInspector{
         currentScope=&globalScope;
     }
 
+    SemanticAnalyzer(std::vector<SymbolVariant> semanticsForLibrary):SemanticAnalyzer(){
+        for(auto symbol:semanticsForLibrary){
+            globalScope.insert(symbol);
+        }
+    }
+
     void inspect(class RootNode* node){
         //TODO: init built_in name symbols
         std::cout << "inspecting root node\n";
@@ -51,10 +57,9 @@ struct SemanticAnalyzer:INodeInspector{
         currentResult = E::leftOf(SporeError("NOT IMPLEMENTED"));
     }
     void inspect(class AssignmentNode* node){
-        node->name->identify(this);
-        auto result = currentResult.flatMap([&](SymbolVariant nameSymbol){
-            if(nameSymbol.type!=SymbolVariant::t_identifier)
-                return E::leftOf(SporeError("Bad var name."));
+        auto result = currentResult.flatMap([&](SymbolVariant previous){
+            std::string name = node->name;
+        
             std::cout << "got the name...\n";
             node->expression->identify(this);
             std::cout << "evaluated expr name...\n";
@@ -64,7 +69,7 @@ struct SemanticAnalyzer:INodeInspector{
 
                 // if(value.type != SymbolVariant::t_data_variable|value.type != SymbolVariant::t_function_variable)
                 //     return SporeError("bad value or function");
-                setName(value, nameSymbol.as_identifier.name);
+                setName(value, name);
                 setScopeLevel(value, currentScope->scopeLevel);
                 currentScope->insert(value);
                 std::cout << "inserted name into scope...\n";
@@ -197,8 +202,8 @@ struct SemanticAnalyzer:INodeInspector{
         std::cout <<"IN Function call NODE\n";
 
         currentResult = currentResult.flatMap([&](SymbolVariant previous){
-            if(currentScope->lookup(node->name->value).type==SymbolVariant::t_unknown){
-                return Either<SporeError,SymbolVariant>(SporeError("Function: \""+node->name->value+"\" not found!"));
+            if(currentScope->lookup(node->name).type==SymbolVariant::t_unknown){
+                return Either<SporeError,SymbolVariant>(SporeError("Function: \""+node->name+"\" not found!"));
             }else{
                 node->args->identify(this);
                 return currentResult.flatMap([&](SymbolVariant args){

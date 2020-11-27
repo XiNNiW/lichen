@@ -102,9 +102,9 @@ struct IfNode:ASTNode{
     }
 };
 struct AssignmentNode:ASTNode{
-    IdentifierNode* name;
+    std::string name;
     ASTNode* expression;
-    AssignmentNode(IdentifierNode* name, ASTNode* expression)
+    AssignmentNode(std::string name, ASTNode* expression)
     :name(name),expression(expression){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
@@ -132,8 +132,8 @@ struct AssociateNode:ASTNode{
 };
 struct CompositionNode:ASTNode{
     ASTNode* expression;
-    IdentifierNode* function;
-    CompositionNode(ASTNode* expression, IdentifierNode* function)
+    ASTNode* function;
+    CompositionNode(ASTNode* expression, ASTNode* function)
     :expression(expression),function(function){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
@@ -279,16 +279,16 @@ struct StringNode:ASTNode{
 };
 struct IdentifierNode:ASTNode{
     std::string value;
-    IdentifierNode(std::string value):value(value){}
+    IdentifierNode(const char * value):value(value){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);
     }
 };
 
 struct FunctionCallNode:ASTNode{
-    IdentifierNode* name;
+    std::string name;
     ExpressionsNode* args;
-    FunctionCallNode(IdentifierNode* name, ExpressionsNode* args)
+    FunctionCallNode(std::string name, ExpressionsNode* args)
     :name(name),args(args){}
     void identify(INodeInspector* visitor){
         visitor->inspect(this);

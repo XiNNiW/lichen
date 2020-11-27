@@ -26,6 +26,7 @@ struct ScopedSymbolTable{
         symbols[getSymbolName(symbol)] = symbol;
     }
 
+
     SymbolVariant lookupInCurrentScopeOnly(std::string name){
         auto keyIterator = symbols.find(name);
         bool foundIt = keyIterator!=symbols.end();
