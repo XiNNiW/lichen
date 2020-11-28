@@ -17,7 +17,6 @@ TEST(EvalTest, FunctionalTest_Assignment){
 
 }
 
-
 TEST(EvalTest, FunctionalTest_Algae_sinOsc){
     Either<SporeError,Signal<double,int>> result = _eval("osc(440.0);\n\n");
 
@@ -27,4 +26,3 @@ TEST(EvalTest, FunctionalTest_Algae_sinOsc){
     ASSERT_TRUE(result.isRight());
 
 }
-

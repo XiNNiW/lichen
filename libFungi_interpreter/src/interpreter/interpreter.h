@@ -98,74 +98,104 @@ struct FungiInterpreter:INodeInspector{
     }
     void inspect( LambdaNode* node){
         std::cout <<"inspecting lambda...\n";
-        currentResult = currentResult.flatMap([&](SporeDataVariant previous){
-            node->arguments->identify(this);
-            return currentResult.flatMap([&](SporeDataVariant formalParams){
-                std::cout << "about to make func... formal params is type... "<<int(formalParams.type)<<" \n";
+        callStack.push(ActivationRecord("LAMBDA",ActivationRecord::t_function_call,callStack.peek().nestingLevel+1));
 
-                return constructLambda(formalParams, node->block);
-            });
+        currentResult = currentResult.flatMap([&](SporeDataVariant previous){
+            // node->arguments->identify(this);
+            // return currentResult.flatMap([&](SporeDataVariant formalParams){
+            //     std::cout << "about to make func... formal params is type... "<<int(formalParams.type)<<" \n";
+
+            //     return constructLambda(formalParams, node->block);
+            // });
+            return constructLambda(node->formalParams, node->block);
         });
+        callStack.pop();
     }
 
-    //TODO: allow partial application
-    Either<SporeError, SporeDataVariant> constructLambda(SporeDataVariant formalParams, BlockNode* block){
-        std::cout<<"making the func\n";
+    Either<SporeError, SporeDataVariant> constructLambda(std::vector<std::string> formalParams, BlockNode* block){
         return Either<SporeError, SporeDataVariant>(SporeDataVariant(std::function<Either<SporeError, SporeDataVariant>(SporeDataVariant)>(
             [=](SporeDataVariant args)->Either<SporeError, SporeDataVariant> {
-                std::cout << "function is activated\n";
-                callStack.push(ActivationRecord("LAMBDA",ActivationRecord::t_function_call,callStack.peek().nestingLevel+1));
-                bool hasMultipleParams = formalParams.type==SporeDataVariant::t_list;
                 bool hasMultipleArgs = args.type==SporeDataVariant::t_list;
+                bool hasValidArgs = hasMultipleArgs ? args.as_list.size() == formalParams.size() : false;
 
-                if(hasMultipleParams&&hasMultipleArgs){
-                    std::cout << "args are lists\n";
+                if(hasValidArgs){
 
-                    bool hasValidNumberOfArgs = args.as_list.size() <= formalParams.as_list.size();
-                    if(hasValidNumberOfArgs){
-                        std::cout << "args pass muster\n";
-
-                        for(size_t idx=0; idx<args.as_list.size();idx++){
-                            std::cout << "setting param...\n";
-
-                            callStack.peek().set(formalParams.as_list[idx].as_string,args.as_list[idx]);
-                        }
-                        if(args.as_list.size()==formalParams.as_list.size()){
-                            std::cout << "about to execute body\n";
-
-                            block->identify(this);
-                            callStack.pop();
-                            return currentResult;
-                        } else {
-                            std::cout << "partial application\n";
-                            callStack.pop();
-                            return constructLambda(
-                                SporeDataVariant(
-                                    std::vector<SporeDataVariant>(
-                                        formalParams.as_list.begin()+args.as_list.size(),
-                                        formalParams.as_list.end()
-                                    )
-                                ),
-                                block
-                            );
-
-                        }
+                    for(size_t idx=0; idx<args.as_list.size();idx++){
+                        callStack.peek().set(formalParams[idx],args.as_list[idx]);
                     }
-                    else {
-                        std::cout << "bad number of params...\n";
-                        callStack.pop();
-                        return Either<SporeError, SporeDataVariant>::leftOf(SporeError("Bad Args"));
-                    }
+
+                    block->identify(this);
+                    return currentResult;
+                
                 } else {
-                    std::cout << "bad args...not a list...\n";
-                    std::cout << "formal params is type... "<<int(formalParams.type)<<" \n";
-                    std::cout << "args is type... "<<int(args.type)<<" \n";
-                    callStack.pop();
+
                     return Either<SporeError, SporeDataVariant>::leftOf(SporeError("Bad Args"));
                 }
             }
         )));
     }
+
+    //TODO: allow partial application
+    // Either<SporeError, SporeDataVariant> constructLambda(SporeDataVariant formalParams, BlockNode* block){
+    //     std::cout<<"making the func\n";
+    //     return Either<SporeError, SporeDataVariant>(SporeDataVariant(std::function<Either<SporeError, SporeDataVariant>(SporeDataVariant)>(
+    //         [=](SporeDataVariant args)->Either<SporeError, SporeDataVariant> {
+    //             std::cout << "function is activated\n";
+    //             callStack.push(ActivationRecord("LAMBDA",ActivationRecord::t_function_call,callStack.peek().nestingLevel+1));
+    //             bool hasMultipleParams = formalParams.type==SporeDataVariant::t_list;
+    //             bool hasMultipleArgs = args.type==SporeDataVariant::t_list;
+
+    //             if(hasMultipleParams&&hasMultipleArgs){
+    //                 std::cout << "args are lists\n";
+
+    //                 bool hasValidNumberOfArgs = args.as_list.size() == formalParams.as_list.size();
+    //                 if(hasValidNumberOfArgs){
+    //                     std::cout << "args pass muster\n";
+
+    //                     for(size_t idx=0; idx<args.as_list.size();idx++){
+    //                         std::cout << "setting param...\n";
+
+    //                         callStack.peek().set(formalParams.as_list[idx].as_string,args.as_list[idx]);
+    //                     }
+    //                     if(args.as_list.size()==formalParams.as_list.size()){
+    //                         std::cout << "about to execute body\n";
+
+    //                         block->identify(this);
+    //                         callStack.pop();
+    //                         return currentResult;
+    //                     } else {
+    //                         return Either<SporeError,SporeDataVariant>::leftOf(SporeError("Wrong number of args"));
+    //                     }
+    //                     // else {
+    //                     //     std::cout << "partial application\n";
+    //                     //     callStack.pop();
+    //                     //     return constructLambda(
+    //                     //         SporeDataVariant(
+    //                     //             std::vector<SporeDataVariant>(
+    //                     //                 formalParams.as_list.begin()+args.as_list.size(),
+    //                     //                 formalParams.as_list.end()
+    //                     //             )
+    //                     //         ),
+    //                     //         block
+    //                     //     );
+
+    //                     // }
+    //                 }
+    //                 else {
+    //                     std::cout << "bad number of params...\n";
+    //                     callStack.pop();
+    //                     return Either<SporeError, SporeDataVariant>::leftOf(SporeError("Bad Args"));
+    //                 }
+    //             } else {
+    //                 std::cout << "bad args...not a list...\n";
+    //                 std::cout << "formal params is type... "<<int(formalParams.type)<<" \n";
+    //                 std::cout << "args is type... "<<int(args.type)<<" \n";
+    //                 callStack.pop();
+    //                 return Either<SporeError, SporeDataVariant>::leftOf(SporeError("Bad Args"));
+    //             }
+    //         }
+    //     )));
+    // }
 
     void inspect( ArgsNode* node){
         std::cout << "INspecting ARGS\n";
@@ -312,28 +342,45 @@ struct FungiInterpreter:INodeInspector{
         //should look up identifier from built in functions
         //if not found it should look in interpreter context for variables
         std::cout << "about to look up identifier: "<<node->value<<"\n";
-        currentResult = callStack.peek().get(node->value);
+        auto maybeValue = callStack.peek().get(node->value);
+        
+        maybeValue.flatMap([&](SporeDataVariant value){
+             currentResult = Either<SporeError, SporeDataVariant>(value);
+        });
+        if(maybeValue.isNothing()){
+            currentResult = Either<SporeError, SporeDataVariant>(SporeError("Name not found"));
+        }
         std::cout << node->value << " is " << typeToString(currentResult.getRight())<<"\n";
     }
 
     void inspect(FunctionCallNode* node){
         std::cout << "inspecting function call\n";
-        // currentResult = Either<SporeError, SporeDataVariant>(SporeError("NOT IMPLEMENTED!"));
         currentResult = currentResult.flatMap([&](SporeDataVariant previous){
-            auto function = callStack.peek().get(node->name);
-            if(function.type == SporeDataVariant::t_lambda){
-                node->args->identify(this);
-                return currentResult.flatMap([&](SporeDataVariant args){
-                    std::cout << "calling function...\n";
-                    if(args.type == SporeDataVariant::t_list){
-                        return function.as_lambda(args);
+
+            Maybe<SporeDataVariant> function = callStack.peek().get(node->name);
+
+            if(function.isNothing())
+                function = globals.get(node->name);
+                
+            return function
+                .toEither<SporeError>(SporeError(node->name+" is not found"))
+                .flatMap([&](SporeDataVariant func){
+                    if(func.type == SporeDataVariant::t_lambda){
+                        node->args->identify(this);
+                        return currentResult.flatMap([&](SporeDataVariant args){
+                            std::cout << "calling function...\n";
+                            // if(args.type == SporeDataVariant::t_list){
+                            return func.as_lambda(args);
+                            // } else {
+                            //     return Either<SporeError,SporeDataVariant>(SporeError("improper args for function: "+node->name));
+                            // }
+                        });
                     } else {
-                        return Either<SporeError,SporeDataVariant>(SporeError("improper args for function: "+node->name));
+                        return Either<SporeError,SporeDataVariant>::leftOf(SporeError(node->name+" is not a function"));
                     }
+
                 });
-            } else {
-                return Either<SporeError,SporeDataVariant>::leftOf(SporeError(node->name+" is not a function"));
-            }
+           
         });
 
     }

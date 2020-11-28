@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include "either.h"
 
 template<typename T>
 class Maybe {
@@ -38,6 +39,11 @@ class Maybe {
 
         const T& getOrElse(const T& elseValue) const {
             return this->isSomthing()? this->getValue(): elseValue;
+        }
+
+        template<typename TypeIfNothing>
+        Either<TypeIfNothing,T> toEither(TypeIfNothing valIfNothing) const {
+            return this->isNothing()? Either<TypeIfNothing,T>::leftOf(valIfNothing): Either<TypeIfNothing,T>::rightOf(this->getValue());
         }
 
         const bool isNothing() const {

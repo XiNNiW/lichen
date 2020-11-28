@@ -23,9 +23,11 @@ TEST(ActivationRecordTest, ObjectIO){
     record.set("data1",data1);
     record.set("data2",data2);
 
-    EXPECT_EQ(SporeDataVariant::t_int, record.get("data1").type);
-    EXPECT_EQ(42, record.get("data1").as_integer);
+    EXPECT_TRUE( record.get("data1").isSomthing());
+    EXPECT_EQ(SporeDataVariant::t_int, record.get("data1").getValue().type);
+    EXPECT_EQ(42, record.get("data1").getValue().as_integer);
 
-    EXPECT_EQ(SporeDataVariant::t_string, record.get("data2").type);
-    EXPECT_EQ("goob", record.get("data2").as_string);
+    EXPECT_TRUE(record.get("data2").isSomthing());
+    EXPECT_EQ(SporeDataVariant::t_string, record.get("data2").getValue().type);
+    EXPECT_EQ("goob", record.get("data2").getValue().as_string);
 }

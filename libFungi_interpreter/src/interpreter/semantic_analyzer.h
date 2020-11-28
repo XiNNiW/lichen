@@ -95,48 +95,55 @@ struct SemanticAnalyzer:INodeInspector{
     }
     void inspect(ArgsNode* args){
         std::cout << "inspecting args node\n";
-        if(args->arguments)
-            args->arguments->identify(this);
-        currentResult=currentResult.flatMap([&](SymbolVariant a){
-            std::string last = args->lastArg->value;
-            std::vector<std::string> list = std::vector<std::string>();
-            switch (a.type)
-            {
-            case SymbolVariant::t_arguments_list:
-                list = a.as_arg_list.list;
-                break;
-            
-            default:
-                list.push_back(last);
-                break;
-            }
-            return Either<SporeError,SymbolVariant>(ArgumentsListSymbol(list));
+        currentResult = currentResult.flatMap([&](SymbolVariant prev){
+            if(args->arguments)
+                args->arguments->identify(this);
+            return currentResult.flatMap([&](SymbolVariant a){
+                std::string last = args->lastArg->value;
+                std::vector<std::string> list = std::vector<std::string>();
+                switch (a.type)
+                {
+                case SymbolVariant::t_arguments_list:
+                    list = a.as_arg_list.list;
+                    break;
+                
+                default:
+                    list.push_back(last);
+                    break;
+                }
+                return Either<SporeError,SymbolVariant>(ArgumentsListSymbol(list));
+            });
         });
+       
     }
     void inspect(LambdaNode* node){
         std::cout <<"IN LAMBDA NODE\n";
-        ScopedSymbolTable lambdaScope = ScopedSymbolTable("LAMBDA",currentScope->scopeLevel+1,currentScope);
-        currentScope = &lambdaScope;
+        currentResult = currentResult.flatMap([&](SymbolVariant prev){
+            ScopedSymbolTable lambdaScope = ScopedSymbolTable("LAMBDA",currentScope->scopeLevel+1,currentScope);
+            currentScope = &lambdaScope;
 
-        node->arguments->identify(this);
-        currentResult = currentResult.flatMap([&](SymbolVariant argsList){
-            if(argsList.type != SymbolVariant::t_arguments_list){
-                return E::leftOf(SporeError("Bad args for lambda"));
-            }
+            node->arguments->identify(this);
+            auto functionSymbol = currentResult.flatMap([&](SymbolVariant argsList){
+                if(argsList.type != SymbolVariant::t_arguments_list){
+                    return E::leftOf(SporeError("Bad args for lambda"));
+                }
+                    
+                ArgumentsListSymbol formalParams = argsList.as_arg_list;
+                for(std::string param:formalParams.list){
+                    currentScope->insert(DataVariableSymbol(param));
+                }
+                node->formalParams = argsList.as_arg_list.list;
                 
-            ArgumentsListSymbol formalParams = argsList.as_arg_list;
-            for(std::string param:formalParams.list){
-                currentScope->insert(DataVariableSymbol(param));
-            }
-            
-            node->block->identify(this);
-            currentResult = currentResult.flatMap([&](SymbolVariant expr){
-                return E::rightOf(FunctionVariableSymbol(formalParams.list,*(node->block)));
+                node->block->identify(this);
+                currentResult = currentResult.flatMap([&](SymbolVariant expr){
+                    return E::rightOf(FunctionVariableSymbol(formalParams.list,*(node->block)));
+                });
+                return currentResult;
             });
-            return currentResult;
-        });
 
-        currentScope = currentScope->enclosingScope;
+            currentScope = currentScope->enclosingScope;
+            return functionSymbol;
+        });
 
     }
     void inspect(class AssociateNode*){

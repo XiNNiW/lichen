@@ -62,6 +62,7 @@ add_executable( LichenTests
     libFungi_interpreter/test/activation_record_test.cpp
     libFungi_interpreter/test/maybe_test.cpp
     libFungi_interpreter/test/either_test.cpp
+    libFungi_interpreter/test/signal_wrapper_test.cpp
     libFungi_interpreter/test/eval_test.cpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS}

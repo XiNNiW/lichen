@@ -114,6 +114,7 @@ struct LambdaNode:ASTNode{
     ArgsNode* arguments;
     // std::vector<std::string>* arguments;
     BlockNode* block;
+    std::vector<std::string> formalParams = std::vector<std::string>();
     LambdaNode(ArgsNode* arguments, BlockNode* block)
     :arguments(arguments),block(block){}
     void identify(INodeInspector* visitor){

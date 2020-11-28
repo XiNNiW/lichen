@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include "data_varient.h"
+#include "maybe.h"
 #include <iostream>
 
 struct ActivationRecord {
@@ -14,9 +15,12 @@ struct ActivationRecord {
     :name(name),type(type),nestingLevel(nestingLevel),members(std::map<std::string, SporeDataVariant>())
     {}
  
-    SporeDataVariant get(std::string name){
-        std::cout<<"get called\n";
-        return members[name];
+    Maybe<SporeDataVariant> get(std::string name){
+        if(members.find(name)!=members.end()){
+            return Maybe<SporeDataVariant>::of(members[name]);
+        } else {
+            return Maybe<SporeDataVariant>::nothing();
+        };
     }
 
     void set(std::string name, const SporeDataVariant& value){
