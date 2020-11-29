@@ -419,5 +419,82 @@ namespace signals {
 
     };
 
+    template <typename sample,int SAMPLE_RATE>
+    struct DSPLib{
+    
+        template<typename S>
+        static auto iterator(const S & signal){  
+            return SignalIterator<S>(signal);
+        }
+
+        template<typename A>
+        static const auto constant(const A & a){
+            return math::constant<A>(a);
+        }
+        template<typename A, typename B>
+        static auto mult(const A & a, const B & b){
+            return math::multiply<A,B>(a,b);
+        }
+
+        template<typename A, typename B>
+        static auto div(const A & a,const B & b){
+            return math::divide<A,B>(a,b);
+        }
+
+        template<typename A, typename B>
+        static auto add(const A & a,const B & b){
+            return math::add<A,B>(a,b);
+        }
+
+        template<typename A, typename B>
+        static auto sub(const A & a,const B & b){
+            return math::subtract<A,B>(a,b);
+        }
+
+        template<typename StartSample_signal, typename EndTime_signal, typename SignalToLoop>
+        static auto loop(const StartSample_signal & startSampleNum, const EndTime_signal & endSampleNum, const SignalToLoop & signal){
+            return control::loop<StartSample_signal, EndTime_signal, SignalToLoop>(startSampleNum, endSampleNum, signal);
+        }
+
+        template<typename BPM_sig, typename Num_sig>
+        static auto beats(const BPM_sig & bpm,const Num_sig & num){
+            return control::beats<sample, BPM_sig, Num_sig>(SAMPLE_RATE,bpm,num);
+        }
+
+        template<typename Note_sig>
+        static auto mtof(const Note_sig & note){
+            return control::mtof<sample, Note_sig>(note);
+        }
+
+        template<typename A, typename duration_sig>
+        static auto seq(const duration_sig & duration,const std::vector<A> & events){
+            return control::sequence<A, duration_sig>(duration, events);
+        }
+
+        template<typename Start_sig, typename End_sig, typename RampTime_sig>
+        static auto ramp(const Start_sig & start,const End_sig & stop,const RampTime_sig & numberOfSamples){
+            return control::ramp<sample,Start_sig, End_sig, RampTime_sig>(start, stop, numberOfSamples);
+        }
+
+        template<typename AttackTime_sig, typename DecayTime_sig, typename SustainValue_sig, typename SustainTime_sig, typename ReleaseTime_sig>
+        static auto adsr(const AttackTime_sig & attack,const DecayTime_sig & decay,const SustainValue_sig & sustainValue,const SustainTime_sig & sustainTime,const ReleaseTime_sig & release){
+            return control::adsr
+                            <sample, AttackTime_sig, DecayTime_sig, SustainValue_sig, SustainTime_sig, ReleaseTime_sig>
+                            (attack, decay, sustainValue, sustainTime, release);
+        }
+
+        template<typename Freq_sig>
+        static auto osc(const Freq_sig & freq){
+            return oscillator::sinOsc<sample, Freq_sig>(SAMPLE_RATE,freq);
+        }
+
+        template<typename Freq_sig>
+        static auto phasor(const Freq_sig & freq){
+            return oscillator::phasor<sample,Freq_sig>(SAMPLE_RATE,freq);
+        }
+
+
+    };
+
 
 }

@@ -34,7 +34,7 @@ add_library( LibAlgae_dsp STATIC
 
 #Fungi (Interpreter)
 add_library( LibFungi_interpreter STATIC
-             libFungi_interpreter/src/eval.cpp
+             libFungi_interpreter/src/eval.h
              ${BISON_MyParser_OUTPUTS}
              ${FLEX_MyScanner_OUTPUTS}
 )

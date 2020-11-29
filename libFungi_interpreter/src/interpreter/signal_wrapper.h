@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <libAlgae_dsp/dsp.h>
 
 
 template<typename Sample,typename Time>

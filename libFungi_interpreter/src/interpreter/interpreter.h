@@ -64,7 +64,7 @@ struct FungiInterpreter:INodeInspector{
             return currentResult.flatMap([&](SporeDataVariant exprs){
                 node->expression->identify(this);
                 return currentResult.flatMap([&](SporeDataVariant last){
-                    if(exprs.type==SporeDataVariant::t_list){
+                    if(exprs.type==SporeDataType::t_list){
                         std::vector<SporeDataVariant> _exprs = exprs.as_list;
                         _exprs.push_back(last);
                         return Either<SporeError,SporeDataVariant>(_exprs);
@@ -115,7 +115,7 @@ struct FungiInterpreter:INodeInspector{
     Either<SporeError, SporeDataVariant> constructLambda(std::vector<std::string> formalParams, BlockNode* block){
         return Either<SporeError, SporeDataVariant>(SporeDataVariant(std::function<Either<SporeError, SporeDataVariant>(SporeDataVariant)>(
             [=](SporeDataVariant args)->Either<SporeError, SporeDataVariant> {
-                bool hasMultipleArgs = args.type==SporeDataVariant::t_list;
+                bool hasMultipleArgs = args.type==SporeDataType::t_list;
                 bool hasValidArgs = hasMultipleArgs ? args.as_list.size() == formalParams.size() : false;
 
                 if(hasValidArgs){
@@ -205,7 +205,7 @@ struct FungiInterpreter:INodeInspector{
             return currentResult.flatMap([&](SporeDataVariant args){
                 SporeDataVariant finalArg = SporeDataVariant(node->lastArg->value);
                
-                if(args.type == SporeDataVariant::t_list){
+                if(args.type == SporeDataType::t_list){
                     std::vector<SporeDataVariant> _args = args.as_list;
                     _args.push_back(finalArg);
                     return Either<SporeError,SporeDataVariant>::rightOf(SporeDataVariant(_args));
@@ -219,7 +219,7 @@ struct FungiInterpreter:INodeInspector{
 
         if(currentResult.isRight())
             std::cout << "args are .. " << typeToString(currentResult.getRight()) << "\n";
-            if(currentResult.getRight().type == SporeDataVariant::t_list)
+            if(currentResult.getRight().type == SporeDataType::t_list)
                 std::cout << "args have "<< currentResult.getRight().as_list.size() << " elements\n";
 
     }
@@ -365,7 +365,7 @@ struct FungiInterpreter:INodeInspector{
             return function
                 .toEither<SporeError>(SporeError(node->name+" is not found"))
                 .flatMap([&](SporeDataVariant func){
-                    if(func.type == SporeDataVariant::t_lambda){
+                    if(func.type == SporeDataType::t_lambda){
                         node->args->identify(this);
                         return currentResult.flatMap([&](SporeDataVariant args){
                             std::cout << "calling function...\n";

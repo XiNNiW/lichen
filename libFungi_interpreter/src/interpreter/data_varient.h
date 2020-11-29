@@ -42,10 +42,10 @@
 //     }
 // };
 
-
+enum SporeDataType {t_int, t_float, t_bool, t_string, t_list, t_map, t_signal, t_lambda, t_unknown};
 
 struct SporeDataVariant{
-    enum {t_int, t_float, t_bool, t_string, t_list, t_map, t_signal, t_lambda, t_unknown} type;
+    enum SporeDataType type;
     union{
         int as_integer;
         double as_float;
@@ -241,6 +241,159 @@ struct SporeDataVariant{
         return !(*this==s);
     }
 
+    Either<SporeError, SporeDataVariant> operator + (const SporeDataVariant& s){
+        return add(*this, s);
+    }
+
+    friend Either<SporeError, SporeDataVariant> add(const SporeDataVariant& left,const SporeDataVariant& right){
+        using E = Either<SporeError, SporeDataVariant>;
+        auto intByX = [&](){
+            int a = left.as_integer;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a+right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a+right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a+right.as_bool));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: int + "+typeToString(right)));
+
+        };
+        auto floatByX = [&](){
+            int a = left.as_float;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a+right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a+right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a+right.as_bool));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: float + "+typeToString(right)));
+
+        };
+        auto boolByX = [&](){
+            bool a = left.as_bool;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a+right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a+right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a+right.as_bool));
+
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: bool + "+typeToString(right)));
+
+        };
+       
+        switch (left.type)
+        {
+        case t_int:
+            return intByX();
+        case t_float:
+            return floatByX();
+        case t_bool:
+            return boolByX();
+
+ 
+        default:
+            break;
+        }
+
+        return E(SporeError("unsupported operation"));
+    }
+
+    Either<SporeError, SporeDataVariant> operator - (const SporeDataVariant& s){
+        return subtract(*this, s);
+    }
+
+    friend Either<SporeError, SporeDataVariant> subtract(const SporeDataVariant& left,const SporeDataVariant& right){
+        using E = Either<SporeError, SporeDataVariant>;
+        auto intByX = [&](){
+            int a = left.as_integer;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a-right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a-right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a-right.as_bool));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: int - "+typeToString(right)));
+
+        };
+        auto floatByX = [&](){
+            int a = left.as_float;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a-right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a-right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a-right.as_bool));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: float - "+typeToString(right)));
+
+        };
+        auto boolByX = [&](){
+            bool a = left.as_bool;
+            switch (right.type)
+            {
+            case t_int:
+                return E(SporeDataVariant(a-right.as_integer));
+            case t_float:
+                return E(SporeDataVariant(a-right.as_float));
+            case t_bool:
+                return E(SporeDataVariant(a-right.as_bool));
+
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: bool - "+typeToString(right)));
+
+        };
+
+        switch (left.type)
+        {
+        case t_int:
+            return intByX();
+        case t_float:
+            return floatByX();
+        case t_bool:
+            return boolByX();
+ 
+ 
+        default:
+            break;
+        }
+
+        return E(SporeError("unsupported operation"));
+    }
+
+
     Either<SporeError, SporeDataVariant> operator * (const SporeDataVariant& s){
         return multiply(*this, s);
     }
@@ -257,6 +410,7 @@ struct SporeDataVariant{
                 return E(SporeDataVariant(a*right.as_float));
             case t_bool:
                 return E(SporeDataVariant(a*right.as_bool));
+
             default:
                 break;
             }
@@ -273,6 +427,7 @@ struct SporeDataVariant{
                 return E(SporeDataVariant(a*right.as_float));
             case t_bool:
                 return E(SporeDataVariant(a*right.as_bool));
+
             default:
                 break;
             }
@@ -296,15 +451,7 @@ struct SporeDataVariant{
             return E(SporeError("unsupported operation: bool * "+typeToString(right)));
 
         };
-        // auto stringByX = [&](){
-        //    return E(SporeError("unsupported operation"));
-        // };
-        // auto listByX = [&](){
-        //     // auto result = left.as_list;
-        //     // for_each(result.begin(), result.end(), [&](auto el){return multiply(el,right);});
-        //     // return result;
-        //     return E(SporeError("unsupported operation"));
-        // };
+
         switch (left.type)
         {
         case t_int:
@@ -313,6 +460,82 @@ struct SporeDataVariant{
             return floatByX();
         case t_bool:
             return boolByX();
+
+ 
+        default:
+            break;
+        }
+
+        return E(SporeError("unsupported operation"));
+    }
+
+    Either<SporeError, SporeDataVariant> operator / (const SporeDataVariant& s){
+        return divide(*this, s);
+    }
+
+    friend Either<SporeError, SporeDataVariant> divide(const SporeDataVariant& left,const SporeDataVariant& right){
+        using E = Either<SporeError, SporeDataVariant>;
+        auto intByX = [&](){
+            int a = left.as_integer;
+            switch (right.type)
+            {
+            case t_int:
+                return right.as_integer!=0?E(SporeDataVariant(a/right.as_integer)):E(SporeError("Divide by zero"));
+            case t_float:
+                return right.as_float!=0.0?E(SporeDataVariant(a/right.as_float)):E(SporeError("Divide by zero"));
+            case t_bool:
+                return right.as_bool!=false?E(SporeDataVariant(a/right.as_bool)):E(SporeError("Divide by zero"));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: int / "+typeToString(right)));
+
+        };
+        auto floatByX = [&](){
+            int a = left.as_float;
+            switch (right.type)
+            {
+            case t_int:
+                return right.as_integer!=0?E(SporeDataVariant(a/right.as_integer)):E(SporeError("Divide by zero"));
+            case t_float:
+                return right.as_float!=0.0?E(SporeDataVariant(a/right.as_float)):E(SporeError("Divide by zero"));
+            case t_bool:
+                return right.as_bool!=false?E(SporeDataVariant(a/right.as_bool)):E(SporeError("Divide by zero"));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: float / "+typeToString(right)));
+
+        };
+        auto boolByX = [&](){
+            bool a = left.as_bool;
+            switch (right.type)
+            {
+            case t_int:
+                return right.as_integer!=0?E(SporeDataVariant(a/right.as_integer)):E(SporeError("Divide by zero"));
+            case t_float:
+                return right.as_float!=0.0?E(SporeDataVariant(a/right.as_float)):E(SporeError("Divide by zero"));
+            case t_bool:
+                return right.as_bool!=false?E(SporeDataVariant(a/right.as_bool)):E(SporeError("Divide by zero"));
+
+            default:
+                break;
+            }
+            return E(SporeError("unsupported operation: bool / "+typeToString(right)));
+
+        };
+      
+        switch (left.type)
+        {
+        case t_int:
+            return intByX();
+        case t_float:
+            return floatByX();
+        case t_bool:
+            return boolByX();
+
  
         default:
             break;
@@ -324,28 +547,28 @@ struct SporeDataVariant{
     friend std::string typeToString(SporeDataVariant d){
         switch (d.type)
         {
-        case SporeDataVariant::t_int:
+        case SporeDataType::t_int:
             return "INT";
             break;
-        case SporeDataVariant::t_float:
+        case SporeDataType::t_float:
             return "FLOAT";
             break;
-        case SporeDataVariant::t_bool:
+        case SporeDataType::t_bool:
             return "FLOAT";
             break;
-        case SporeDataVariant::t_list:
+        case SporeDataType::t_list:
             return "LIST";
             break;
-        case SporeDataVariant::t_string:
+        case SporeDataType::t_string:
             return "STRING";
             break;
-        case SporeDataVariant::t_signal:
+        case SporeDataType::t_signal:
             return "SIGNAL";
             break;
-        case SporeDataVariant::t_lambda:
+        case SporeDataType::t_lambda:
             return "FUNCTION";
             break;
-        case SporeDataVariant::t_unknown:
+        case SporeDataType::t_unknown:
             return "UNKNOWN";
             break;
         

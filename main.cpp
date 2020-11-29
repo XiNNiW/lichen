@@ -47,55 +47,51 @@ static void write_sample_float64ne(char *ptr, double sample) {
     double *buf = (double *)ptr;
     *buf = sample;
 }
+signals::environment<double> e = signals::environment<double>(48000);
 
 auto makeSignal(){
-    signals::environment<double> e = signals::environment<double>(48000);
-
-    auto clock = e.beats(e.constant(120.0), e.constant(1.0));
-    auto env = e.adsr(
-        e.div(clock,e.constant(4.0)),
-        e.div(clock,e.constant(4.0)), 
-        e.constant(0.5), 
-        e.div(clock,e.constant(4.0)), 
-        e.div(clock,e.constant(4.0))
-    );
-
-    auto pitch = e.mtof(
-        e.seq(clock, std::vector<int>({60,67,70,72}))
-    );
-
-    return e.iterator(
-        e.mult(
-            e.mult(e.constant(0.25), e.loop(e.constant(0), clock, env))
-            ,
-            e.osc(
-                e.add(
-                    pitch, //e.constant(0.0)
-                    e.mult(
-                        e.loop(e.constant(0), clock, 
-                            e.mult(e.constant(1000.0), env)
-                        )
-                        ,
-                        e.osc(e.mult(pitch,e.constant(2.0)))
-                    )
-                )
-            )
-        )
-        
-    );
-    // return e.iterator(
-    //     e.mult(
-    //         e.constant(0.25),
-    //         e.osc(
-    //             e.mtof(e.seq(e.constant(48000), std::vector<int>({60,67,70,72})))
-    //             //e.mult(e.constant(2.0),e.constant(440.0))
-    //         )
-    //     )
+    // auto clock = e.beats(e.constant(120.0), e.constant(1.0));
+    // auto env = e.adsr(
+    //     e.div(clock,e.constant(4.0)),
+    //     e.div(clock,e.constant(4.0)), 
+    //     e.constant(0.5), 
+    //     e.div(clock,e.constant(4.0)), 
+    //     e.div(clock,e.constant(4.0))
     // );
+
+    // auto pitch = e.mtof(
+    //     e.seq(clock, std::vector<int>({60,67,70,72}))
+    // );
+
+    // return 
+    //     e.mult(
+    //         e.mult(e.constant(0.25), e.loop(e.constant(0), clock, env))
+    //         ,
+    //         e.osc(
+    //             e.add(
+    //                 pitch, //e.constant(0.0)
+    //                 e.mult(
+    //                     e.loop(e.constant(0), clock, 
+    //                         e.mult(e.constant(1000.0), env)
+    //                     )
+    //                     ,
+    //                     e.osc(e.mult(pitch,e.constant(2.0)))
+    //                 )
+    //             )
+    //         )
+    //     );
+    Either<SporeError, Signal<double,int>> result = eval("osc(440.0);");
+
+    if(result.isRight()){
+        return result.getRight();
+    } else {
+        return Signal<double,int>(e.constant(0.0));
+    }
 
 }
 
-auto signalIterator = makeSignal();
+auto signalIterator = e.iterator(makeSignal()._sig);
+// auto signalIterator = e.iterator(makeSignal());
 
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
     double float_sample_rate = outstream->sample_rate;

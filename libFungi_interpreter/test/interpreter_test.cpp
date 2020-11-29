@@ -39,13 +39,13 @@ TEST(InterpreterTest, Assignment_AndThenReference) {
     Either<SporeError, SporeDataVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SporeDataVariant resultSymbol = errorOrResult.getRight();
-    ASSERT_EQ(SporeDataVariant::t_unknown, resultSymbol.type);
+    ASSERT_EQ(SporeDataType::t_unknown, resultSymbol.type);
 
     ASSERT_TRUE(interpreter->callStack.peek().get("foo").isSomthing());
-    ASSERT_EQ(SporeDataVariant::t_int, interpreter->callStack.peek().get("foo").getValue().type);
+    ASSERT_EQ(SporeDataType::t_int, interpreter->callStack.peek().get("foo").getValue().type);
     ASSERT_EQ(15, interpreter->callStack.peek().get("foo").getValue().as_integer);
     ASSERT_TRUE(interpreter->callStack.peek().get("bar").isSomthing());
-    ASSERT_EQ(SporeDataVariant::t_int, interpreter->callStack.peek().get("bar").getValue().type);
+    ASSERT_EQ(SporeDataType::t_int, interpreter->callStack.peek().get("bar").getValue().type);
     ASSERT_EQ(45, interpreter->callStack.peek().get("bar").getValue().as_integer);
 
 }
@@ -71,10 +71,10 @@ TEST(InterpreterTest, Assignment_Expression) {
     Either<SporeError, SporeDataVariant> errorOrResult = interpreter->currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SporeDataVariant resultSymbol = errorOrResult.getRight();
-    ASSERT_EQ(SporeDataVariant::t_unknown, resultSymbol.type);
+    ASSERT_EQ(SporeDataType::t_unknown, resultSymbol.type);
 
     ASSERT_TRUE(interpreter->callStack.peek().get("foo").isSomthing());
-    ASSERT_EQ(SporeDataVariant::t_int, interpreter->callStack.peek().get("foo").getValue().type);
+    ASSERT_EQ(SporeDataType::t_int, interpreter->callStack.peek().get("foo").getValue().type);
     ASSERT_EQ(15, interpreter->callStack.peek().get("foo").getValue().as_integer);
 
 }
@@ -89,7 +89,7 @@ TEST(InterpreterTest, BinaryOp_Multiply) {
     interpreter->inspect(multiplicationInstruction);
     Either<SporeError,SporeDataVariant> result = interpreter->currentResult;
     ASSERT_TRUE(result.isRight());
-    ASSERT_EQ(SporeDataVariant::t_int, result.getRight().type);
+    ASSERT_EQ(SporeDataType::t_int, result.getRight().type);
     ASSERT_EQ(15, result.getRight().as_integer);
 }
 
@@ -127,10 +127,10 @@ TEST(InterpreterTest, Assignment_Lambda) {
     Either<SporeError, SporeDataVariant> errorOrResult = interpreter.currentResult;
     ASSERT_TRUE(errorOrResult.isRight());
     SporeDataVariant result = errorOrResult.getRight();
-    ASSERT_EQ(SporeDataVariant::t_unknown, result.type);
+    ASSERT_EQ(SporeDataType::t_unknown, result.type);
 
     ASSERT_TRUE(interpreter.callStack.peek().get("foo").isSomthing());
-    ASSERT_EQ(SporeDataVariant::t_lambda, interpreter.callStack.peek().get("foo").getValue().type);
+    ASSERT_EQ(SporeDataType::t_lambda, interpreter.callStack.peek().get("foo").getValue().type);
 
 }
 
@@ -178,10 +178,10 @@ TEST(InterpreterTest, FunctionCall) {
         std::cout << "error returned: " << errorOrResult.getLeft().message<<"\n";
     ASSERT_TRUE(errorOrResult.isRight());
     SporeDataVariant result = errorOrResult.getRight();
-    ASSERT_EQ(SporeDataVariant::t_unknown, result.type);
+    ASSERT_EQ(SporeDataType::t_unknown, result.type);
 
     ASSERT_TRUE(interpreter.callStack.peek().get("hannah").isSomthing());
-    ASSERT_EQ(SporeDataVariant::t_int, interpreter.callStack.peek().get("hannah").getValue().type);
+    ASSERT_EQ(SporeDataType::t_int, interpreter.callStack.peek().get("hannah").getValue().type);
     ASSERT_EQ(30, interpreter.callStack.peek().get("hannah").getValue().as_integer);
 
 }
@@ -219,15 +219,15 @@ TEST(InterpreterTest, FunctionCall_global) {
         std::cout << "error returned: " << errorOrResult.getLeft().message<<"\n";
     ASSERT_TRUE(errorOrResult.isRight());
     SporeDataVariant result = errorOrResult.getRight();
-    ASSERT_EQ(SporeDataVariant::t_unknown, result.type);
+    ASSERT_EQ(SporeDataType::t_unknown, result.type);
 
     ASSERT_TRUE(interpreter.callStack.peek().get("hannah").isSomthing());
-    if(interpreter.callStack.peek().get("hannah").getValue().type == SporeDataVariant::t_list){
+    if(interpreter.callStack.peek().get("hannah").getValue().type == SporeDataType::t_list){
         for_each(interpreter.callStack.peek().get("hannah").getValue().as_list.begin(),interpreter.callStack.peek().get("hannah").getValue().as_list.end(),[](SporeDataVariant a){
             std::cout <<"type is..." << a.type;
         });
     }
-    ASSERT_EQ(SporeDataVariant::t_int, interpreter.callStack.peek().get("hannah").getValue().type);
+    ASSERT_EQ(SporeDataType::t_int, interpreter.callStack.peek().get("hannah").getValue().type);
     ASSERT_EQ(5, interpreter.callStack.peek().get("hannah").getValue().as_integer);
 
 }
