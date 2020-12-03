@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/interpreter/either.h"
+#include "../src/either.h"
 
 TEST(EitherTest_classAPI, RightConstructsRight) { 
     Either<char,int> intOrString = Either<char,int>::rightOf(5);

@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include "../src/interpreter/signal_wrapper.h"
+#include "../src/signal_wrapper.h"
 #include "../../libAlgae_dsp/dsp.h"
 #include <iostream>
 using std::cout;
 
 
 TEST(SignalWrapperTest, Properties_AndStaticAsserts){
-    using S = Signal<double,int>;
+    using S = Signal;
     EXPECT_TRUE(std::is_move_constructible<S>::value);
     EXPECT_TRUE(std::is_move_assignable<S>::value);
 
@@ -20,7 +20,7 @@ TEST(SignalWrapperTest, Properties_AndStaticAsserts){
 TEST(SignalWrapperTest, CanContainSignalFunctors){
     auto freq = signals::math::constant<double>(440.0);
     auto oscillator = signals::oscillator::sinOsc<double,decltype(freq)>(48000,freq);
-    Signal<double,int> osc = Signal<double,int>(oscillator);
+    Signal osc = Signal(oscillator);
 
     ASSERT_FLOAT_EQ(0.057564028,osc(0));
 

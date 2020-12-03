@@ -13,14 +13,6 @@ class Either {
     public:
         Either<L,R>(const L& left) :_left(left),_isRight(false){}
         Either<L,R>(const R& right):_right(right),_isRight(true){}
-        // Either<L,R>(const Either<L,R>& e):_isRight(e._isRight){
-        //     std::cout<<"in either copy cons...\n";
-        //     if(_isRight){
-        //         _right =e.getRight();
-        //     }else{
-        //         _left =e.getLeft();
-        //     }
-        // }
 
         static Either<L,R> rightOf(const R& r){
             return Either<L,R>(r);

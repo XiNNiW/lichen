@@ -3,7 +3,7 @@
 #include <string.h>
 #include <soundio/soundio.h>
 #include <libAlgae_dsp/dsp.h>
-#include "libFungi_interpreter/src/eval.h"
+#include <libFungi_lua_interpreter/interpreter.h>
 
 static const double PI = 3.14159265358979323846264338328;
 static double seconds_offset = 0.0;
@@ -47,9 +47,40 @@ static void write_sample_float64ne(char *ptr, double sample) {
     double *buf = (double *)ptr;
     *buf = sample;
 }
-signals::environment<double> e = signals::environment<double>(48000);
+using dsp = signals::DSPLib<double,48000>;
+sol::state lua = configureScriptingEnvironment();
 
 auto makeSignal(){
+    auto script = R"LICHEN(
+        clock = beats(120,1)
+        qnote = div(clock,4)
+        env = loop(
+            constant(0),
+            clock,
+            adsr(qnote,qnote,constant(0.5),qnote,qnote)
+        )
+        pitch = mtof(seq(clock,{60,67,70,58}))
+        fmthing = osc(add(
+            pitch,
+            mult(
+                mult(1000,env),
+                osc(mult(2,pitch))
+            )
+        ))
+        metaosc = osc(mult(pitch,fmthing))
+
+        return mult(
+            mult(0.25,env),
+            add(fmthing, metaosc)
+        )
+        
+    )LICHEN";
+    auto signalOrError = eval(&lua,script);
+    if(signalOrError.isRight()){
+        return signalOrError.getRight()._sig;
+    } else {
+        return Signal(dsp::constant(0))._sig;
+    }
     // auto clock = e.beats(e.constant(120.0), e.constant(1.0));
     // auto env = e.adsr(
     //     e.div(clock,e.constant(4.0)),
@@ -80,18 +111,18 @@ auto makeSignal(){
     //             )
     //         )
     //     );
-    Either<SporeError, Signal<double,int>> result = eval("osc(440.0);");
+    // Either<SporeError, Signal<double,int>> result = eval("osc(440.0);");
 
-    if(result.isRight()){
-        return result.getRight();
-    } else {
-        return Signal<double,int>(e.constant(0.0));
-    }
+    // if(result.isRight()){
+    //     return result.getRight();
+    // } else {
+    //     return Signal<double,int>(e.constant(0.0));
+    // }
 
 }
 
-auto signalIterator = e.iterator(makeSignal()._sig);
-// auto signalIterator = e.iterator(makeSignal());
+// auto signalIterator = e.iterator(makeSignal()._sig);
+auto signalIterator = dsp::iterator(makeSignal());
 
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
     double float_sample_rate = outstream->sample_rate;

@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <vector>
+#include "src/buffered_node.h"
 
 template<typename F, typename G, typename A>
 struct compose{
@@ -419,7 +420,7 @@ namespace signals {
 
     };
 
-    template <typename sample,int SAMPLE_RATE>
+    template <typename sample, int SAMPLE_RATE>
     struct DSPLib{
     
         template<typename S>
@@ -430,6 +431,14 @@ namespace signals {
         template<typename A>
         static const auto constant(const A & a){
             return math::constant<A>(a);
+        }
+        template<typename A>
+        static const auto cos(const A & a){
+            return math::cosine<A>(a);
+        }
+        template<typename A>
+        static const auto sin(const A & a){
+            return math::sine<A>(a);
         }
         template<typename A, typename B>
         static auto mult(const A & a, const B & b){
@@ -490,7 +499,7 @@ namespace signals {
 
         template<typename Freq_sig>
         static auto phasor(const Freq_sig & freq){
-            return oscillator::phasor<sample,Freq_sig>(SAMPLE_RATE,freq);
+            return oscillator::phasor<sample, Freq_sig>(SAMPLE_RATE,freq);
         }
 
 

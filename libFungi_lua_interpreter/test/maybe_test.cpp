@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../src/interpreter/maybe.h"
+#include "../src/maybe.h"
 
 // using Monad::Maybe;
 // using Monad::Just;
