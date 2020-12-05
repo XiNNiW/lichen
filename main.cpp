@@ -50,79 +50,7 @@ static void write_sample_float64ne(char *ptr, double sample) {
 using dsp = signals::DSPLib<double,48000>;
 sol::state lua = configureScriptingEnvironment();
 
-auto makeSignal(){
-    auto script = R"LICHEN(
-        clock = beats(120,1)
-        qnote = div(clock,4)
-        env = loop(
-            constant(0),
-            clock,
-            adsr(qnote,qnote,constant(0.5),qnote,qnote)
-        )
-        pitch = mtof(seq(clock,{60,67,70,58}))
-        fmthing = osc(add(
-            pitch,
-            mult(
-                mult(1000,env),
-                osc(mult(2,pitch))
-            )
-        ))
-        metaosc = osc(mult(pitch,fmthing))
 
-        return mult(
-            mult(0.25,env),
-            add(fmthing, metaosc)
-        )
-        
-    )LICHEN";
-    // auto signalOrError = eval(&lua,script);
-    // if(signalOrError.isRight()){
-    //     return signalOrError.getRight()._sig;
-    // } else {
-    //     return Signal(dsp::constant(0))._sig;
-    // }
-    // auto clock = e.beats(e.constant(120.0), e.constant(1.0));
-    // auto env = e.adsr(
-    //     e.div(clock,e.constant(4.0)),
-    //     e.div(clock,e.constant(4.0)), 
-    //     e.constant(0.5), 
-    //     e.div(clock,e.constant(4.0)), 
-    //     e.div(clock,e.constant(4.0))
-    // );
-
-    // auto pitch = e.mtof(
-    //     e.seq(clock, std::vector<int>({60,67,70,72}))
-    // );
-
-    // return 
-    //     e.mult(
-    //         e.mult(e.constant(0.25), e.loop(e.constant(0), clock, env))
-    //         ,
-    //         e.osc(
-    //             e.add(
-    //                 pitch, //e.constant(0.0)
-    //                 e.mult(
-    //                     e.loop(e.constant(0), clock, 
-    //                         e.mult(e.constant(1000.0), env)
-    //                     )
-    //                     ,
-    //                     e.osc(e.mult(pitch,e.constant(2.0)))
-    //                 )
-    //             )
-    //         )
-    //     );
-    // Either<SporeError, Signal<double,int>> result = eval("osc(440.0);");
-
-    // if(result.isRight()){
-    //     return result.getRight();
-    // } else {
-    //     return Signal<double,int>(e.constant(0.0));
-    // }
-
-}
-
-// auto signalIterator = e.iterator(makeSignal()._sig);
-// auto signalIterator = dsp::iterator(makeSignal());
 Signal theSignal = Signal();
 
 int t = 0;
@@ -363,7 +291,7 @@ int main(int argc, char **argv){
                     soundio_strerror(soundio_outstream_pause(outstream, true)));
                 theSignal = signalOrError.getRight();
                 want_pause = false;
-                fprintf(stout, "unpausing result: %s\n",
+                fprintf(stdout, "unpausing result: %s\n",
                     soundio_strerror(soundio_outstream_pause(outstream, false)));
             } else {
                 std::cout << signalOrError.getLeft().message << std::endl;
