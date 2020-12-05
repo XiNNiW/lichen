@@ -16,3 +16,4 @@ Makefile
 sporelang_bison.cpp
 sporelang_bison.hpp
 sporelang_flex.cpp
+install_manifest.txt

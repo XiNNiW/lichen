@@ -71,16 +71,18 @@ target_link_libraries(LibFungi_lua_interpreter LibAlgae_dsp)
 
 #Production Build
 add_executable(
-    Lichen
+    lichen
     main.cpp
     # ${BISON_MyParser_OUTPUTS}
     # ${FLEX_MyScanner_OUTPUTS}
 )
-target_link_libraries(Lichen LibAlgae_dsp)
-target_link_libraries(Lichen ${SOUNDIO_LIBRARY})
-target_link_libraries(Lichen ${LUA_LIBRARIES})
-target_link_libraries(Lichen LibSol2)
-target_link_libraries(Lichen LibFungi_lua_interpreter)
+target_link_libraries(lichen LibAlgae_dsp)
+target_link_libraries(lichen ${SOUNDIO_LIBRARY})
+target_link_libraries(lichen ${LUA_LIBRARIES})
+target_link_libraries(lichen LibSol2)
+target_link_libraries(lichen LibFungi_lua_interpreter)
+
+install(TARGETS lichen DESTINATION /usr/bin)
 
 
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)

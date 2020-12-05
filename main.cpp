@@ -75,12 +75,12 @@ auto makeSignal(){
         )
         
     )LICHEN";
-    auto signalOrError = eval(&lua,script);
-    if(signalOrError.isRight()){
-        return signalOrError.getRight()._sig;
-    } else {
-        return Signal(dsp::constant(0))._sig;
-    }
+    // auto signalOrError = eval(&lua,script);
+    // if(signalOrError.isRight()){
+    //     return signalOrError.getRight()._sig;
+    // } else {
+    //     return Signal(dsp::constant(0))._sig;
+    // }
     // auto clock = e.beats(e.constant(120.0), e.constant(1.0));
     // auto env = e.adsr(
     //     e.div(clock,e.constant(4.0)),
@@ -122,11 +122,18 @@ auto makeSignal(){
 }
 
 // auto signalIterator = e.iterator(makeSignal()._sig);
-auto signalIterator = dsp::iterator(makeSignal());
+// auto signalIterator = dsp::iterator(makeSignal());
+Signal theSignal = Signal();
+
+int t = 0;
+auto sigIterator = [](){
+    return theSignal(t++);
+};
 
 static void write_callback(struct SoundIoOutStream *outstream, int frame_count_min, int frame_count_max) {
     double float_sample_rate = outstream->sample_rate;
     int sampleRate = outstream->sample_rate;
+    
 
     struct SoundIoChannelArea *areas;
     int err;
@@ -149,7 +156,7 @@ static void write_callback(struct SoundIoOutStream *outstream, int frame_count_m
         for (int t = 0; t < frame_count; t += 1) {
             
             // dsp code here
-            double sample = signalIterator();
+            double sample = sigIterator();
    
             for (int channel = 0; channel < layout->channel_count; channel += 1) {
                 write_sample(areas[channel].ptr, sample);
@@ -347,10 +354,24 @@ int main(int argc, char **argv){
                     soundio_strerror(soundio_outstream_clear_buffer(outstream)));
         } else if (c == 'q') {
             break;
+        } else if (c=='l'){
+            char pathToProg[500];
+            std::cin.getline(pathToProg, 500);
+            auto signalOrError = evalFile(&lua,std::string(pathToProg));
+            if(signalOrError.isRight()){
+                fprintf(stdout, "pausing result: %s\n",
+                    soundio_strerror(soundio_outstream_pause(outstream, true)));
+                theSignal = signalOrError.getRight();
+                want_pause = false;
+                fprintf(stout, "unpausing result: %s\n",
+                    soundio_strerror(soundio_outstream_pause(outstream, false)));
+            } else {
+                std::cout << signalOrError.getLeft().message << std::endl;
+            }
         } else if (c == '\r' || c == '\n') {
             // ignore
         } else {
-            fprintf(stderr, "Unrecognized command: %c\n", c);
+           fprintf(stderr, "Unrecognized command: %c\n", c);
         }
     }
 
